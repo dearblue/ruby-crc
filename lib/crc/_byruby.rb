@@ -1,18 +1,26 @@
+#!ruby
+
 #--
 # Author:: dearblue <dearblue@users.osdn.me>
-# License:: BSD-2-Clause
+# License:: Creative Commons License Zero (CC0 / Public Domain)
 #++
 
 #
+# \* \* \* \* \* \* \* \*
+#
 # Ruby implemented CRC generator.
-# It's Based on the Intel's slice-by-eight algorithm (but byte-order-free).
+# It's used slice-by-16 algorithm with byte-order free and byte-alignment free.
+# This is based on the Intel's slice-by-eight algorithm.
 #
 # It's faster than about 50% (CRC-32) and about 30% (CRC-64) of
 # lookup-table algorithm. But need more memory.
 #
 # reference:
-# * http://www.intel.com/technology/comms/perfnet/download/CRC_generators.pdf
-# * xz-utils (src/liblzma/check/crc32_fast.c, src/liblzma/check/crc32_tablegen.c)
+# * https://sourceforge.net/projects/slicing-by-8/
+# * xz-utils
+#   * http://tukaani.org/xz/
+#   * xz-5.2.2/src/liblzma/check/crc32_fast.c
+#   * xz-5.2.2/src/liblzma/check/crc32_tablegen.c
 #
 # If defined "RUBY_CRC_NOFAST=2" enviroment variable, switch to lookup-table algorithm.
 #
@@ -66,7 +74,7 @@ module CRC
     end
   end
 
-  class Generator < Struct.new(:bitsize, :bitmask, :polynomial, :initial_state, :table8, :reflect_input, :reflect_output, :xor_output, :name)
+  class Generator < Struct.new(:bitsize, :bitmask, :polynomial, :initial_state, :table, :reflect_input, :reflect_output, :xor_output, :name)
     BasicStruct = superclass
 
     def initialize(bitsize, polynomial, initial_state = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil)
@@ -108,7 +116,7 @@ module CRC
     end
 
     def update_with_lookup_table(seq, state)
-      t = table8[0]
+      t = table[0]
 
       if reflect_input
         String(seq).each_byte do |ch|
@@ -127,7 +135,7 @@ module CRC
     end
 
     def update_with_slice_by_eight(seq, s)
-      tX = table8
+      tX = table
       t0 = tX[ 0]; t1 = tX[ 1]; t2 = tX[ 2]; t3 = tX[ 3]
       t4 = tX[ 4]; t5 = tX[ 5]; t6 = tX[ 6]; t7 = tX[ 7]
       t8 = tX[ 8]; t9 = tX[ 9]; tA = tX[10]; tB = tX[11]
@@ -140,6 +148,7 @@ module CRC
       if reflect_input
         if bitsize <= 32
           # speed improvement for 32-bits CRC
+          i = 0
           while i < iii
             s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8) & 0xff] ^
                 tD[seq.getbyte(i +  2) ^ (s >> 16) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 24) & 0xff] ^
@@ -152,6 +161,7 @@ module CRC
             i += 16
           end
         else
+          i = 0
           while i < iii
             s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8) & 0xff] ^
                 tD[seq.getbyte(i +  2) ^ (s >> 16) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 24) & 0xff] ^
@@ -192,16 +202,14 @@ module CRC
       end
     end
 
-    def table8
-      unless t = super
-        if reflect_input
-          set_table8 t = CRC.build_table8!(bitsize, polynomial)
-        else
-          set_table8 t = CRC.build_table8(bitsize, polynomial)
-        end
+    def table
+      if reflect_input
+        set_table t = CRC.build_reflect_table(bitsize, polynomial, slice: 16)
+      else
+        set_table t = CRC.build_table(bitsize, polynomial, slice: 16)
       end
 
-      define_singleton_method :table8, self.class.superclass.instance_method(:table8)
+      define_singleton_method :table, self.class.superclass.instance_method(:table)
 
       t
     end
@@ -216,10 +224,10 @@ module CRC
     end
 
     class BasicStruct
-      alias set_table8 table8=
-      private :set_table8
+      alias set_table table=
+      private :set_table
 
-      undef :bitsize=, :bitmask=, :polynomial=, :initial_state=, :table8=,
+      undef :bitsize=, :bitmask=, :polynomial=, :initial_state=, :table=,
             :reflect_input=, :reflect_output=, :xor_output=, :name=, :[]=
     end
   end

@@ -8,7 +8,11 @@ module CRC
     end
     bitmask = ~(~0 << bitsize0)
     crc &= bitmask
-    [polynomial, Utils.bitreflect(polynomial, bitsize0)].each do |poly|
+    results = []
+    poly = Array(polynomial)
+    #poly += poly.map { |po| Utils.bitreflect(po, bitsize0) }
+    #poly.uniq!
+    poly.each do |poly|
       poly &= bitmask
       [false, true].each do |refin|
         [false, true].each do |refout|
@@ -17,13 +21,13 @@ module CRC
             Array(initstate).each do |init|
               init &= bitmask
               mod = CRC.create_module(bitsize0, poly, init, refin, refout, xormask)
-              return mod if mod.crc(seq) == crc
+              results << mod if mod.crc(seq) == crc
             end
           end
         end
       end
     end
 
-    nil
+    results
   end
 end
