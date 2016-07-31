@@ -1,6 +1,8 @@
+#!ruby
+
 require_relative "../crc"
 
-module CRC
+class CRC
   def self.find(crc, seq, bitsize, polynomial, initstate = [0, ~0, 1], xor = [0, ~0, 1])
     bitsize0 = bitsize.to_i
     if bitsize0 < 1 || bitsize0 > 128
@@ -10,8 +12,6 @@ module CRC
     crc &= bitmask
     results = []
     poly = Array(polynomial)
-    #poly += poly.map { |po| Utils.bitreflect(po, bitsize0) }
-    #poly.uniq!
     poly.each do |poly|
       poly &= bitmask
       [false, true].each do |refin|
@@ -20,7 +20,7 @@ module CRC
             xormask &= bitmask
             Array(initstate).each do |init|
               init &= bitmask
-              mod = CRC.create_module(bitsize0, poly, init, refin, refout, xormask)
+              mod = CRC.new(bitsize0, poly, init, refin, refout, xormask)
               results << mod if mod.crc(seq) == crc
             end
           end

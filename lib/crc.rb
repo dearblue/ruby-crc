@@ -10,6 +10,8 @@ else
   end
 end
 
+require_relative "crc/version"
+
 #
 # This is a general CRC generator.
 #
@@ -30,15 +32,18 @@ end
 #       crc32 << s
 #     end
 #     p crc32           # => #<CRC::CRC32:6A632AA5>
-#     p crc32.state     # => 1784883877
+#     p crc32.crc       # => 1784883877
 #     p crc32.digest    # => "jc*\xA5"
 #     p crc32.hexdigest # => "6A632AA5"
 #
-module CRC
+class CRC
   CRC = self
 
   extend Utils
 
+  #
+  # Utilities.
+  #
   module Utils
     extend self
 
@@ -141,20 +146,23 @@ module CRC
 
   extend Utils
 
+  #
+  # Internal using module.
+  #
   module Aux
-    def self.DIGEST(state, bitsize)
+    def self.DIGEST(num, bitsize)
       bits = (bitsize + 7) / 8 * 8
-      seq = "".b
-      (bits - 8).step(0, -8) { |i| seq << yield((state >> i) & 0xff) }
+      seq = ""
+      (bits - 8).step(0, -8) { |i| seq << yield((num >> i) & 0xff) }
       seq
     end
 
-    def self.digest(state, bitsize)
-      DIGEST(state, bitsize) { |n| [n].pack("C") }
+    def self.digest(num, bitsize)
+      DIGEST(num, bitsize) { |n| n.chr(Encoding::BINARY) }
     end
 
-    def self.hexdigest(state, bitsize)
-      DIGEST(state, bitsize) { |n| "%02X" % n }
+    def self.hexdigest(num, bitsize)
+      DIGEST(num, bitsize) { |n| "%02X" % n }
     end
 
     #
@@ -174,34 +182,75 @@ module CRC
     end
   end
 
-  class Generator
-    def crc(seq, state = nil)
-      finish(update(seq, setup(state)))
+  module ModuleClass
+    def setup(crc = nil)
+      crc ||= initial_crc
+      crc = CRC.bitreflect(crc, bitsize) if reflect_input? ^ reflect_output?
+      crc ^ xor_output
     end
 
-    def setup(state = nil)
-      state ||= initial_state
-      state = CRC.bitreflect(state, bitsize) if reflect_input ^ reflect_output
-      state ^ xor_output
-    end
+    alias init setup
 
     def finish(state)
-      state = CRC.bitreflect(state, bitsize) if reflect_input ^ reflect_output
+      state = CRC.bitreflect(state, bitsize) if reflect_input? ^ reflect_output?
       state ^ xor_output
     end
 
-    alias reflect_input? reflect_input
-    alias reflect_output? reflect_output
-
-    def digest(seq, state = nil)
-      Aux.digest(crc(seq, state), bitsize)
+    def crc(seq, crc = nil)
+      finish(update(seq, setup(crc)))
     end
 
-    def hexdigest(seq, state = nil)
-      Aux.hexdigest(crc(seq, state), bitsize)
+    def digest(seq, crc = nil)
+      Aux.digest(crc(seq, crc), bitsize)
     end
 
-    def to_s
+    def hexdigest(seq, crc = nil)
+      Aux.hexdigest(crc(seq, crc), bitsize)
+    end
+
+    def variant?(obj)
+      case
+      when obj.kind_of?(CRC)
+        mod = obj.class
+      when obj.kind_of?(Class) && obj < CRC
+        mod = obj
+      else
+        return false
+      end
+
+      if bitsize == mod.bitsize &&
+         polynomial == mod.polynomial &&
+         reflect_input? == mod.reflect_input? &&
+         reflect_output? == mod.reflect_output? &&
+         xor_output == mod.xor_output
+        true
+      else
+        false
+      end
+    end
+
+    #
+    # call-seq:
+    #   combine(crc1, crc2) -> new combined crc
+    #   combine(crc1_int, crc2_int, crc2_len) -> new combined crc
+    #
+    def combine(*args)
+      case args.size
+      when 2
+        unless args[0].kind_of?(CRC) && args[1].kind_of?(CRC)
+          raise ArgumentError, "When given two arguments, both arguments are should be CRC instance"
+        end
+
+        crc1 + crc2
+      when 3
+        Aux.combine(Integer(args[0].to_i), Integer(args[1].to_i), Integer(args[2].to_i),
+                    bitsize, polynomial, initial_crc, reflect_input?, reflect_output?, xor_output)
+      else
+        raise ArgumentError, "wrong number of arguments (given #{args.size}, expect 2..3)"
+      end
+    end
+
+    def to_str
       case
       when bitsize > 64 then width = 20
       when bitsize > 32 then width = 16
@@ -210,17 +259,17 @@ module CRC
       else                   width =  2
       end
 
-      if reflect_input
-        ref = ", reflect-in#{reflect_output ? "/out" : ""}"
+      if reflect_input?
+        ref = " reflect-in#{reflect_output? ? "/out" : ""}"
       else
-        ref = reflect_output ? ", reflect-out" : ""
+        ref = reflect_output? ? " reflect-out" : ""
       end
 
-      case initial_state
+      case initial_crc
       when 0        then init = "0"
       when bitmask  then init = "~0"
       when 1        then init = "1"
-      else               init = "0x%0#{width}X" % initial_state
+      else               init = "0x%0#{width}X" % initial_crc
       end
 
       case xor_output
@@ -230,15 +279,11 @@ module CRC
       else               xor = "0x%0#{width}X" % xor_output
       end
 
-      if nm = name
-        "#{nm}(CRC-%d-0x%0#{width}X%s init=%s, xor=%s)" % [bitsize, polynomial, ref, init, xor]
-      else
-        "(CRC-%d-0x%0#{width}X%s init=%s, xor=%s)" % [bitsize, polynomial, ref, init, xor]
-      end
+      "CRC-%d-0x%0#{width}X%s init=%s xor=%s" % [bitsize, polynomial, ref, init, xor]
     end
 
     def inspect
-      "\#<#{self.class} #{to_s}>"
+      "#{super}{#{to_str}}"
     end
 
     def pretty_inspect(q)
@@ -246,189 +291,136 @@ module CRC
     end
   end
 
-  class BasicCRC < Struct.new(:internal_state, :initial_state, :size)
-    BasicStruct = superclass
+  attr_accessor :state, :size
 
-    class BasicStruct
-      alias state! internal_state
-      alias set_state! internal_state=
+  #
+  # call-seq:
+  #   initialize(initial_crc = nil, size = 0)
+  #   initialize(seq, initial_crc = nil, size = 0)
+  #
+  def initialize(*args)
+    initialize_args(args) do |seq, initial_crc, size|
+      m = self.class
+      @state = m.setup((initial_crc || m.initial_crc).to_i)
+      @size = size.to_i
+      update(seq) if seq
     end
+  end
 
-    #
-    # call-seq:
-    #   initialize(initial_state = nil, size = 0)
-    #   initialize(seq, initial_state = nil, size = 0)
-    #
-    def initialize(*args)
-      initialize_args(args) do |seq, initial_state, size|
-        g = self.class::GENERATOR
-        initial_state ||= g.initial_state
-        super g.setup(initial_state.to_i), initial_state.to_i, size.to_i
-        update(seq) if seq
-      end
+  def reset(initial_crc = nil, size = 0)
+    m = self.class
+    @state = m.setup((initial_crc || m.initial_crc).to_i)
+    @size = size.to_i
+    self
+  end
+
+  def update(seq)
+    @state = self.class.update(seq, state)
+    @size += seq.bytesize
+    self
+  end
+
+  alias << update
+
+  def crc
+    self.class.finish(state)
+  end
+
+  def +(crc2)
+    raise ArgumentError, "not a CRC instance (#{crc2.inspect})" unless crc2.kind_of?(CRC)
+    m1 = self.class
+    m2 = crc2.class
+    unless m1.bitsize == m2.bitsize &&
+           m1.polynomial == m2.polynomial &&
+           m1.reflect_input? == m2.reflect_input? &&
+           m1.reflect_output? == m2.reflect_output? &&
+           # m1.initial_crc == m2.initial_crc &&
+           m1.xor_output == m2.xor_output
+      raise ArgumentError, "different CRC module (#{m1.inspect} and #{m2.inspect})"
     end
+    m1.new(m1.combine(crc, crc2.crc, crc2.size), size + crc2.size)
+  end
 
-    def reset(initial_state = self.initial_state, size = 0)
-      g = self.class::GENERATOR
-      initial_state ||= g.initial_state
-      set_state! g.setup(initial_state)
-      self.initial_state = initial_state
-      self.size = size.to_i
-      self
-    end
-
-    def update(seq)
-      set_state! self.class::GENERATOR.update(seq, state!)
-      self.size += seq.bytesize
-      self
-    end
-
-    alias << update
-
-    def state
-      self.class::GENERATOR.finish(state!)
-    end
-
-    def +(crc2)
-      raise ArgumentError, "not a CRC instance (#{crc2.inspect})" unless crc2.kind_of?(BasicCRC)
-      c1 = self.class
-      g1 = c1::GENERATOR
-      g2 = crc2.class::GENERATOR
-      unless g1.bitsize == g2.bitsize &&
-             g1.polynomial == g2.polynomial &&
-             g1.reflect_input == g2.reflect_input &&
-             g1.reflect_output == g2.reflect_output &&
-             # g1.initial_state == g2.initial_state &&
-             g1.xor_output == g2.xor_output
-        raise ArgumentError, "different CRC module (#{g1.inspect} and #{g2.inspect})"
-      end
-      c1.new(g1.combine(state, crc2.state, crc2.size), size + crc2.size)
-    end
-
-    def ==(a)
-      case a
-      when BasicCRC
-        c1 = self.class
-        g1 = c1::GENERATOR
-        g2 = a.class::GENERATOR
-        if g1.bitsize == g2.bitsize &&
-           g1.polynomial == g2.polynomial &&
-           g1.reflect_input == g2.reflect_input &&
-           g1.reflect_output == g2.reflect_output &&
-           # g1.initial_state == g2.initial_state &&
-           g1.xor_output == g2.xor_output &&
-           state! == a.state!
-          true
-        else
-          false
-        end
-      when Integer
-        state == a
+  def ==(a)
+    case a
+    when CRC
+      m1 = self.class
+      m2 = a.class
+      if m1.bitsize == m2.bitsize &&
+         m1.polynomial == m2.polynomial &&
+         m1.reflect_input? == m2.reflect_input? &&
+         m1.reflect_output? == m2.reflect_output? &&
+         # m1.initial_crc == m2.initial_crc &&
+         m1.xor_output == m2.xor_output &&
+         state == a.state
+        true
       else
-        super
+        false
       end
+    when Integer
+      crc == a
+    else
+      super
     end
+  end
 
-    alias to_i state
-    alias to_int state
+  alias to_i crc
+  alias to_int crc
 
-    def to_a
-      [state]
-    end
+  def to_a
+    [crc]
+  end
 
-    def digest
-      Aux.DIGEST(state, self.class::GENERATOR.bitsize) { |n| [n].pack("C") }
-    end
+  def digest
+    Aux.digest(crc, self.class.bitsize)
+  end
 
-    # return digest as internal state
-    def digest!
-      Aux.DIGEST(state!, self.class::GENERATOR.bitsize) { |n| [n].pack("C") }
-    end
+  # return digest as internal state
+  def digest!
+    Aux.digest(state, self.class.bitsize)
+  end
 
-    def hexdigest
-      Aux.DIGEST(state, self.class::GENERATOR.bitsize) { |n| "%02X" % n }
-    end
+  def hexdigest
+    Aux.hexdigest(crc, self.class.bitsize)
+  end
 
-    # return hex-digest as internal state
-    def hexdigest!
-      Aux.DIGEST(state!, self.class::GENERATOR.bitsize) { |n| "%02X" % n }
-    end
+  # return hex-digest as internal state
+  def hexdigest!
+    Aux.hexdigest(state, self.class.bitsize)
+  end
 
-    alias to_str hexdigest
-    alias to_s hexdigest
+  alias to_str hexdigest
+  alias to_s hexdigest
 
-    def inspect
-      "\#<#{self.class}:#{hexdigest}>"
-    end
+  def inspect
+    "\#<#{self.class}:#{hexdigest}>"
+  end
 
-    def pretty_inspect(q)
-      q.text inspect
-    end
+  def pretty_inspect(q)
+    q.text inspect
+  end
 
-    class << self
-      alias [] new
-
-      #
-      # call-seq:
-      #   combine(crc1, crc2) -> new combined crc
-      #   combine(crc1_int, crc2_int, crc2_len) -> new combined crc
-      #
-      def combine(crc1, crc2, len2 = nil)
-        return crc1 + crc2 if crc1.kind_of?(BasicCRC) && crc2.kind_of?(BasicCRC)
-        self::GENERATOR.combine(crc1.to_i, crc2.to_i, len2)
-      end
-
-      def crc(seq, state = nil)
-        self::GENERATOR.crc(seq, state)
-      end
-
-      def digest(seq, state = nil)
-        Aux.digest(self::GENERATOR.crc(seq, state), self::GENERATOR.bitsize)
-      end
-
-      def hexdigest(seq, state = nil)
-        Aux.hexdigest(self::GENERATOR.crc(seq, state), self::GENERATOR.bitsize)
-      end
-
-      def inspect
-        if const_defined?(:GENERATOR)
-          if nm = name
-            "#{nm}(#{self::GENERATOR.to_s})"
-          else
-            super.sub(/(?=\>$)/) { " #{self::GENERATOR.to_s}" }
-          end
-        else
-          super
-        end
-      end
-
-      def pretty_inspect(q)
-        q.text inspect
-      end
-    end
-
-    private
-    def initialize_args(args)
-      case args.size
-      when 0
-        yield nil, nil, 0
-      when 1
-        if args[0].kind_of?(String)
-          yield args[0], nil, 0
-        else
-          yield nil, args[0], 0
-        end
-      when 2
-        if args[0].kind_of?(String)
-          yield args[0], args[1], 0
-        else
-          yield nil, args[0], args[1].to_i
-        end
-      when 3
-        yield args[0], args[1], args[2].to_i
+  private
+  def initialize_args(args)
+    case args.size
+    when 0
+      yield nil, nil, 0
+    when 1
+      if args[0].kind_of?(String)
+        yield args[0], nil, 0
       else
-        raise ArgumentError, "wrong argument size (given #{args.size}, expect 0..3)"
+        yield nil, args[0], 0
       end
+    when 2
+      if args[0].kind_of?(String)
+        yield args[0], args[1], 0
+      else
+        yield nil, args[0], args[1].to_i
+      end
+    when 3
+      yield args[0], args[1], args[2].to_i
+    else
+      raise ArgumentError, "wrong argument size (given #{args.size}, expect 0..3)"
     end
   end
 
@@ -443,23 +435,16 @@ module CRC
 
     alias [] lookup
 
-    def crc(modulename, seq, state = nil)
-      lookup(modulename).crc(seq, state)
+    def crc(modulename, seq, crc = nil)
+      lookup(modulename).crc(seq, crc)
     end
 
-    def digest(modulename, seq, state = nil)
-      lookup(modulename).digest(seq, state)
+    def digest(modulename, seq, crc = nil)
+      lookup(modulename).digest(seq, crc)
     end
 
-    def hexdigest(modulename, seq, state = nil)
-      lookup(modulename).hexdigest(seq, state)
-    end
-
-    def create_module(bitsize, polynomial, initial_state = 0, refin = true, refout = true, xor = ~0, name = nil)
-      g = Generator.new(bitsize, polynomial, initial_state, refin, refout, xor, name)
-      crc = Class.new(BasicCRC)
-      crc.const_set :GENERATOR, g
-      crc
+    def hexdigest(modulename, seq, crc = nil)
+      lookup(modulename).hexdigest(seq, crc)
     end
   end
 
@@ -469,10 +454,11 @@ module CRC
   #
   # Create CRC module classes.
   #
-  LIST.each do |bitsize, polynomial, refin, refout, initial_state, xor, check, *names|
+  LIST.each do |bitsize, polynomial, refin, refout, initial_crc, xor, check, *names|
+    names.flatten!
     names.map! { |nm| nm.freeze }
 
-    crc = create_module(bitsize, polynomial, initial_state, refin, refout, xor, names[0])
+    crc = CRC.new(bitsize, polynomial, initial_crc, refin, refout, xor, names[0])
     crc.const_set :NAME, names
 
     names.each do |nm|
@@ -481,31 +467,36 @@ module CRC
         raise NameError, "collision crc-module name: #{nm} (#{crc::GENERATOR} and #{MODULE_TABLE[nm1]::GENERATOR})"
       end
       MODULE_TABLE[nm1] = crc
+
+      name = nm.sub(/(?<=\bCRC)-(?=\d+)/, "").gsub(/[\W]+/, "_")
+      const_set(name, crc)
+
+      define_singleton_method(name.upcase, ->(*args) { crc.new(*args) })
+      define_singleton_method(name.downcase, ->(*args) {
+        if args.size == 0
+          crc
+        else
+          crc.crc(*args)
+        end
+      })
     end
-    name = names[0].sub(/(?<=\bCRC)-(?=\d+)/, "").gsub(/[\W]+/, "_")
-    const_set(name, crc)
 
     check = Integer(check.to_i) if check
     crc.const_set :CHECK, check
-
-    g = crc::GENERATOR
-    define_singleton_method(name.upcase, ->(*args) { crc.new(*args) })
-    define_singleton_method(name.downcase, ->(*args) { g.crc(*args) })
   end
 
   if $0 == __FILE__
     $stderr.puts "#{__FILE__}:#{__LINE__}: SELF CHECK for CRC modules (#{File.basename($".grep(/_(?:byruby|turbo)/)[0]||"")})\n"
     MODULE_TABLE.values.uniq.each do |crc|
-      g = crc::GENERATOR
       check = crc::CHECK
-      checked = g.crc("123456789")
+      checked = crc.crc("123456789")
       case check
       when nil
-        $stderr.puts "| %20s(\"123456789\") = %16X (check only)\n" % [g.name, checked]
+        $stderr.puts "| %20s(\"123456789\") = %16X (check only)\n" % [crc.name, checked]
       when checked
         ;
       else
-        $stderr.puts "| %20s(\"123456789\") = %16X (expect to %X)\n" % [g.name, checked, check]
+        $stderr.puts "| %20s(\"123456789\") = %16X (expect to %X)\n" % [crc.name, checked, check]
       end
     end
     $stderr.puts "#{__FILE__}:#{__LINE__}: DONE SELF CHECK\n"

@@ -12,12 +12,13 @@
 #   * https://github.com/cluelogic/cluelib/blob/master/src/cl_crc.svh
 #   * https://users.ece.cmu.edu/~koopman/crc/hw_data.html
 #   * https://users.ece.cmu.edu/~koopman/roses/dsn04/koopman04_crc_poly_embedded.pdf
+#   * (CRC-64-ISO-3309) http://swissknife.cvs.sourceforge.net/viewvc/swissknife/SWISS/lib/SWISS/CRC64.pm
 #++
 
-module CRC
+class CRC
   LIST = [
     #
-    # bit size,  polynomial,            initial state,
+    # bit size,  polynomial,              initial crc,
     #                refrect input,                xor output,
     #                      reflect output,                       crc("123456789"), names...
     #
@@ -33,10 +34,10 @@ module CRC
     [ 6,               0x19,  true,  true,          0,      0,               0x26, "CRC-6-DARC"],
     [ 6,               0x03,  true,  true,          0,      0,               0x06, "CRC-6-ITU"],
     [ 7,               0x09, false, false,          0,      0,               0x75, "CRC-7", "CRC-7-JESD84-A441"],
-    [ 7,               0x65, false, false,          0,      0,                nil, "CRC-7-MVB"],
+    #[ 7,               0x65, false, false,          0,      0,                nil, "CRC-7-MVB"],
     [ 7,               0x4F,  true,  true,         ~0,      0,               0x53, "CRC-7-ROHC", "CRC-7-RFC 3095"],
     [ 7,               0x45, false, false,          0,      0,               0x61, "CRC-7-UMTS"],
-    [ 8,               0xD5, false, false,          0,      0,                nil, "CRC-8"],
+    #[ 8,               0xD5, false, false,          0,      0,                nil, "CRC-8"],
     [ 8,               0x07, false, false,          0,      0,               0xF4, "CRC-8-CCITT", "CRC-8-SMBus"],
     [ 8,               0x31,  true,  true,          0,      0,               0xA1, "CRC-8-MAXIM", "CRC-8-Dallas/Maxim", "DOW-CRC"],
     [ 8,               0x39,  true,  true,          0,      0,               0x15, "CRC-8-DARC"],
@@ -60,9 +61,9 @@ module CRC
     [14,             0x0805,  true,  true,          0,      0,             0x082D, "CRC-14-DARC"],
     [15,             0x4599, false, false,          0,      0,             0x059E, "CRC-15", "CRC-15-CAN"],
     [15,             0x6815, false, false,          1,      1,             0x2566, "CRC-15-MPT1327"],
-    [16,             0x2F15, false, false,          0,      0,                nil, "Chakravarty"],
-    [16,             0x8005,  true,  true,          0,      0,             0xBB3D, "ARC", "CRC-16", "CRC-IBM", "CRC-16-ARC", "CRC-16-LHA"],
-    [16,             0xA02B, false, false,          0,      0,                nil, "CRC-16-ARINC"],
+    #[16,             0x2F15, false, false,          0,      0,                nil, "Chakravarty"],
+    [16,             0x8005,  true,  true,          0,      0,             0xBB3D, "CRC-16", "ARC", "CRC-IBM", "CRC-16-ARC", "CRC-16-LHA"],
+    #[16,             0xA02B, false, false,          0,      0,                nil, "CRC-16-ARINC"],
     [16,             0x1021, false, false,     0x1D0F,      0,             0xE5CC, "CRC-16-AUG-CCITT", "CRC-16-SPI-FUJITSU"],
     [16,             0xC867, false, false,         ~0,      0,             0x4C06, "CRC-16-CDMA2000"],
     [16,             0x0589, false, false,          1,      1,             0x007E, "CRC-16-DECT-R", "R-CRC-16"],
@@ -81,14 +82,14 @@ module CRC
     [16,             0xA097, false, false,          0,      0,             0x0FB3, "CRC-16-TELEDISK"],
     [16,             0x1021,  true,  true,     0x89EC,      0,             0x26B1, "CRC-16-TMS37157"],
     [16,             0x8005,  true,  true,          0,     ~0,             0xB4C8, "CRC-16-USB"],
-    [16,             0x1021,  true,  true,     0xC6C6,      0,             0xBF05, "CRC-A", "CRC-16-ISO/IEC FCD 14443-3"],
-    [16,             0x1021,  true,  true,          0,      0,             0x2189, "KERMIT", "CRC-16-CCITT", "CRC-16-CCITT-TRUE", "CRC-CCITT"],
-    [16,             0x8005,  true,  true,         ~0,      0,             0x4B37, "MODBUS"],
-    [16,             0x1021,  true,  true,          0,     ~0,             0x906E, "X-25", "CRC-16-IBM-SDLC", "CRC-16-ISO-HDLC", "CRC-B"],
-    [16,             0x1021, false, false,          0,      0,             0x31C3, "XMODEM", "ZMODEM", "CRC-16-ACORN", "CRC-16-LTE"],
-    [17,         0x0001685B, false, false,          0,      0,                nil, "CRC-17-CAN"],
-    [21,         0x00102899, false, false,          0,      0,                nil, "CRC-21-CAN"],
-    [24,         0x005D6DCB, false, false,          0,      0,                nil, "CRC-24"],
+    [16,             0x1021,  true,  true,     0xC6C6,      0,             0xBF05, "CRC-16-A", "CRC-A", "CRC-16-ISO/IEC FCD 14443-3"],
+    [16,             0x1021,  true,  true,          0,      0,             0x2189, "CRC-16-KERMIT", "KERMIT", "CRC-16-CCITT", "CRC-16-CCITT-TRUE", "CRC-CCITT"],
+    [16,             0x8005,  true,  true,         ~0,      0,             0x4B37, "CRC-16-MODBUS", "MODBUS"],
+    [16,             0x1021,  true,  true,          0,     ~0,             0x906E, "CRC-16-X-25", "X-25", "CRC-16-IBM-SDLC", "CRC-16-ISO-HDLC", "CRC-16-CRC-B", "CRC-B"],
+    [16,             0x1021, false, false,          0,      0,             0x31C3, "CRC-16-XMODEM", "XMODEM", "CRC-16-ZMODEM", "ZMODEM", "CRC-16-ACORN", "CRC-16-LTE"],
+    #[17,         0x0001685B, false, false,          0,      0,                nil, "CRC-17-CAN"],
+    #[21,         0x00102899, false, false,          0,      0,                nil, "CRC-21-CAN"],
+    #[24,         0x005D6DCB, false, false,          0,      0,                nil, "CRC-24"],
     [24,         0x00864CFB, false, false,          0,      0,         0x00CDE703, "CRC-24-Radix-64"],
     [24,         0x00864CFB, false, false, 0x00B704CE,      0,         0x0021CF02, "CRC-24-OPENPGP"],
     [24,         0x0000065B,  true,  true, 0x00555555,      0,         0x00C25A56, "CRC-24-BLE"],
@@ -97,25 +98,25 @@ module CRC
     [24,         0x00328B63, false, false,          0,     ~0,         0x00B4F3E6, "CRC-24-INTERLAKEN"],
     [24,         0x00864CFB, false, false,          0,      0,         0x00CDE703, "CRC-24-LTE-A"],
     [24,         0x00800063, false, false,          0,      0,         0x0023EF52, "CRC-24-LTE-B"],
-    [30,         0x2030B9C7, false, false,          0,      0,                nil, "CRC-30"],
+    #[30,         0x2030B9C7, false, false,          0,      0,                nil, "CRC-30"],
     [30,         0x2030B9C7, false, false,          0,     ~0,         0x04C34ABF, "CRC-30-CDMA"],
     [31,         0x04C11DB7, false, false,          0,     ~0,         0x0CE9E46C, "CRC-31-PHILIPS"],
-    [32,         0x04C11DB7,  true,  true,          0,     ~0,         0xCBF43926, "CRC-32", "CRC-32-ADCCP", "PKZIP", "CRC-32-PKZIP"],
+    [32,         0x04C11DB7,  true,  true,          0,     ~0,         0xCBF43926, "CRC-32", "CRC-32-ADCCP", "CRC-32-PKZIP", "PKZIP"],
     [32,         0x04C11DB7, false, false,          0,     ~0,         0xFC891918, "CRC-32-BZIP2", "CRC-32-AAL5", "CRC-32-DECT-B", "B-CRC-32"],
     [32,         0x1EDC6F41,  true,  true,          0,     ~0,         0xE3069283, "CRC-32C", "CRC-32-ISCSI", "CRC-32-CASTAGNOLI", "CRC-32-INTERLAKEN"],
     [32,         0xa833982b,  true,  true,          0,     ~0,         0x87315576, "CRC-32D"],
     [32,         0x04C11DB7, false, false,         ~0,      0,         0x0376E6E7, "CRC-32-MPEG-2"],
     [32,         0x04C11DB7, false, false,         ~0,     ~0,         0x765E7680, "CRC-32-POSIX", "CKSUM"],
-    [32,         0x741B8CD7,  true,  true,          0,     ~0,                nil, "CRC-32K"],
-    [32,         0x32583499,  true,  true,          0,     ~0,                nil, "CRC-32K2"],
+    #[32,         0x741B8CD7,  true,  true,          0,     ~0,                nil, "CRC-32K"],
+    #[32,         0x32583499,  true,  true,          0,     ~0,                nil, "CRC-32K2"],
     [32,         0x814141AB, false, false,          0,      0,         0x3010BF7F, "CRC-32Q"],
-    [32,         0x04C11DB7,  true,  true,         ~0,      0,         0x340BC6D9, "JAMCRC", "CRC-32-JAMCRC"],
-    [32,         0x000000AF, false, false,          0,      0,         0xBD0BE338, "XFER", "CRC-32-XFER"],
+    [32,         0x04C11DB7,  true,  true,         ~0,      0,         0x340BC6D9, "CRC-32-JAMCRC", "JAMCRC"],
+    [32,         0x000000AF, false, false,          0,      0,         0xBD0BE338, "CRC-32-XFER", "XFER"],
     [40,       0x0004820009, false, false,         ~0,     ~0,       0xD4164FC646, "CRC-40-GSM"],
-    [64, 0x42F0E1EBA9EA3693,  true,  true,          0,     ~0, 0x995DC9BBDF1939FA, "CRC-64", "CRC-64-XZ"],
+    [64, 0x42F0E1EBA9EA3693,  true,  true,          0,     ~0, 0x995DC9BBDF1939FA, "CRC-64-XZ", "CRC-64"],
     [64, 0x42F0E1EBA9EA3693, false, false,          0,      0, 0x6C40DF5F0B497347, "CRC-64-ECMA", "CRC-64-ECMA-182"],
     [64, 0x42F0E1EBA9EA3693, false, false,          0,     ~0, 0x62EC59E3F1A4F00A, "CRC-64-WE"],
-    [64, 0x000000000000001B, false, false,          0,      0,                nil, "CRC-64-ISO"],
+    [64, 0x000000000000001B,  true,  true,          0,      0, 0x46A5A9388A5BEFFE, "CRC-64-ISO", "CRC-64-ISO-3309"],
     # [82, 0x308C0111011401440411,  true,  true,          0,      0, 0x9EA83F625023801FD612, "CRC-82/DARC"],
   ]
 end

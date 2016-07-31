@@ -33,7 +33,7 @@
 # License:: zlib-style
 #--
 
-module CRC
+class CRC
   module Aux
     def self.gf2_matrix_times(matrix, vector)
       sum = 0
@@ -53,13 +53,13 @@ module CRC
 
       nil
     end
-  end
 
-  class Generator
-    def combine(crc1, crc2, len2)
+    def self.combine(crc1, crc2, len2,
+                     bitsize, polynomial, initial_crc,
+                     reflect_input, reflect_output, xor_output)
       return crc1 unless len2 > 1
 
-      crc1 ^= initial_state
+      crc1 ^= initial_crc
 
       odd = []
       even = []

@@ -9,8 +9,9 @@ require "zlib"
 require "crc"
 begin; require "extlzma"; rescue LoadError; no_extlzma = true; end
 begin; require "digest/crc"; rescue LoadError; no_digest_crc = true; end
+begin; require "crc32"; rescue LoadError; no_crc32 = true; end
 
-def measure(generator_name)
+def measure(size, generator_name)
   print "  * measuring for #{generator_name}..."
   $stdout.flush
   realms = 5.times.map do
@@ -19,7 +20,7 @@ def measure(generator_name)
     $stdout.flush
     real
   end.min
-  puts " (#{(realms * 100).round / 100.0} ms.)\n"
+  printf " (%.2f ms.) (peak: %0.2f MiB / s)\n", realms, size / (realms / 1000)
   [generator_name, realms]
 end
 
@@ -38,17 +39,22 @@ puts " ** preparing #{size} MiB data...\n"
 #s = SecureRandom.random_bytes(size << 20)
 s = "0" * (size << 20)
 
-crc = measure("ruby-crc/crc32") { CRC.crc32(s) }[1]
+crc = measure(size, "crc/crc32") { CRC.crc32(s) }[1]
 comparisons = []
-comparisons << measure("zlib/crc-32") { Zlib.crc32(s) }
-comparisons << measure("extlzma/crc-32") { LZMA.crc32(s) } unless no_extlzma
-comparisons << measure("digest/crc-32") { Digest::CRC32.digest(s) } unless no_digest_crc
-comparisons << measure("ruby-crc/crc-64") { CRC.crc64(s) }
-comparisons << measure("extlzma/crc-64") { LZMA.crc64(s) } unless no_extlzma
+comparisons << measure(size, "zlib/crc-32") { Zlib.crc32(s) }
+comparisons << measure(size, "extlzma/crc-32") { LZMA.crc32(s) } unless no_extlzma
+comparisons << measure(size, "digest/crc-32") { Digest::CRC32.digest(s) } unless no_digest_crc
+comparisons << measure(size, "crc32/crc-32") { Crc32.calculate(s, s.bytesize, 0) } unless no_crc32
+comparisons << measure(size, "crc/crc-64") { CRC.crc64(s) }
+comparisons << measure(size, "extlzma/crc-64") { LZMA.crc64(s) } unless no_extlzma
+comparisons << measure(size, "crc/crc-5-usb") { CRC.crc5_usb(s) }
+comparisons << measure(size, "crc/crc-16-usb") { CRC.crc16_usb(s) }
+comparisons << measure(size, "crc/crc-32-posix") { CRC.crc32_posix(s) }
+comparisons << measure(size, "crc/crc-32c") { CRC.crc32c(s) }
 
 puts <<'EOS'
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                          (slowly at over 1.0)
+                             (ruby-crc/crc32 is slowly at over 1.0)
 EOS
 
 comparisons.each do |name, meas|

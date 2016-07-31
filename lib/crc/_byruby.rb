@@ -9,7 +9,7 @@
 # \* \* \* \* \* \* \* \*
 #
 # Ruby implemented CRC generator.
-# It's used slice-by-16 algorithm with byte-order free and byte-alignment free.
+# It's used slice-by-16 algorithm with byte-order free.
 # This is based on the Intel's slice-by-eight algorithm.
 #
 # It's faster than about 50% (CRC-32) and about 30% (CRC-64) of
@@ -26,69 +26,46 @@
 #
 # If defined "RUBY_CRC_NOFAST=3" enviroment variable, switch to reference algorithm.
 #
-module CRC
-  module Utils
-    def bitreflect8(n)
-      n    = n.to_i
-      n    = ((n & 0x55) <<  1) | ((n >>  1) & 0x55)
-      n    = ((n & 0x33) <<  2) | ((n >>  2) & 0x33)
-      return ((n & 0x0f) <<  4) |  (n >>  4) # 0x0f
-    end
-
-    def bitreflect16(n)
-      n    = n.to_i
-      n    = ((n & 0x5555) <<  1) | ((n >>  1) & 0x5555)
-      n    = ((n & 0x3333) <<  2) | ((n >>  2) & 0x3333)
-      n    = ((n & 0x0f0f) <<  4) | ((n >>  4) & 0x0f0f)
-      return ((n & 0x00ff) <<  8) |  (n >>  8) # 0x00ff
-    end
-
-    def bitreflect32(n)
-      n    = n.to_i
-      n    = ((n & 0x55555555) <<  1) | ((n >>  1) & 0x55555555)
-      n    = ((n & 0x33333333) <<  2) | ((n >>  2) & 0x33333333)
-      n    = ((n & 0x0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f)
-      n    = ((n & 0x00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff)
-      return ((n & 0x0000ffff) << 16) |  (n >> 16) # 0x0000ffff
-    end
-
-    def bitreflect64(n)
-      n    = n.to_i
-      n    = ((n & 0x5555555555555555) <<  1) | ((n >>  1) & 0x5555555555555555)
-      n    = ((n & 0x3333333333333333) <<  2) | ((n >>  2) & 0x3333333333333333)
-      n    = ((n & 0x0f0f0f0f0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f0f0f0f0f)
-      n    = ((n & 0x00ff00ff00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff00ff00ff)
-      n    = ((n & 0x0000ffff0000ffff) << 16) | ((n >> 16) & 0x0000ffff0000ffff)
-      return ((n & 0x00000000ffffffff) << 32) |  (n >> 32) # 0x00000000ffffffff
-    end
-
-    def bitreflect128(n)
-      n    = n.to_i
-      n    = ((n & 0x55555555555555555555555555555555) <<  1) | ((n >>  1) & 0x55555555555555555555555555555555)
-      n    = ((n & 0x33333333333333333333333333333333) <<  2) | ((n >>  2) & 0x33333333333333333333333333333333)
-      n    = ((n & 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f)
-      n    = ((n & 0x00ff00ff00ff00ff00ff00ff00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff00ff00ff00ff00ff00ff00ff)
-      n    = ((n & 0x0000ffff0000ffff0000ffff0000ffff) << 16) | ((n >> 16) & 0x0000ffff0000ffff0000ffff0000ffff)
-      n    = ((n & 0x00000000ffffffff00000000ffffffff) << 32) | ((n >> 32) & 0x00000000ffffffff00000000ffffffff)
-      return ((n & 0x0000000000000000ffffffffffffffff) << 64) |  (n >> 64) # 0x0000000000000000ffffffffffffffff
-    end
-  end
-
-  class Generator < Struct.new(:bitsize, :bitmask, :polynomial, :initial_state, :table, :reflect_input, :reflect_output, :xor_output, :name)
-    BasicStruct = superclass
-
-    def initialize(bitsize, polynomial, initial_state = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil)
+class CRC
+  class << self
+    #
+    # call-seq:
+    #   new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil) -> new crc module class (CRC based class)
+    #   new(initial_crc = nil, size = 0) -> new crc generator (CRC instance)
+    #   new(seq, initial_crc = nil, size = 0) -> new crc generator (CRC instance)
+    #
+    def new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil)
       bitsize = bitsize.to_i
       if bitsize < 1 || bitsize > 64
         raise ArgumentError, "wrong bitsize (except 1..64, but given #{bitsize})"
       end
+
       bitmask = ~(~0 << bitsize)
       polynomial = bitmask & polynomial
-      initial_state = bitmask & initial_state
+      initial_crc = bitmask & initial_crc
       xor_output = bitmask & xor_output
       name = (name.nil? || ((name = String(name)).empty?)) ? nil : name
-      super(bitsize, bitmask, polynomial, initial_state, nil,
-            !!reflect_input, !!reflect_output, xor_output, name)
+
+      ::Class.new(self) do
+        @bitsize = bitsize
+        @bitmask = bitmask
+        @polynomial = polynomial
+        @initial_crc = initial_crc
+        @table = nil
+        @reflect_input = !!reflect_input
+        @reflect_output = !!reflect_output
+        @xor_output = xor_output
+        @name = name
+
+        # CRC クラスを普通に派生させた場合でも、CRC.new の基底メソッドが呼ばれるための細工
+        define_singleton_method(:new, &Class.instance_method(:new).bind(self))
+
+        singleton_class.class_eval do
+          alias_method :[], :new
+        end
+
+        extend CRC::ModuleClass
+      end
     end
 
     def update_with_reference(seq, state)
@@ -204,14 +181,14 @@ module CRC
 
     def table
       if reflect_input
-        set_table t = CRC.build_reflect_table(bitsize, polynomial, slice: 16)
+        @table = CRC.build_reflect_table(bitsize, polynomial, slice: 16)
       else
-        set_table t = CRC.build_table(bitsize, polynomial, slice: 16)
+        @table = CRC.build_table(bitsize, polynomial, slice: 16)
       end
 
-      define_singleton_method :table, self.class.superclass.instance_method(:table)
+      singleton_class.class_eval "attr_reader :table"
 
-      t
+      @table
     end
 
     case ENV["RUBY_CRC_NOFAST"].to_i
@@ -222,13 +199,60 @@ module CRC
     else
       alias update update_with_reference
     end
+  end
 
-    class BasicStruct
-      alias set_table table=
-      private :set_table
+  module ModuleClass
+    attr_reader :bitsize, :bitmask, :polynomial, :initial_crc,
+                :reflect_input, :reflect_output, :xor_output, :name
 
-      undef :bitsize=, :bitmask=, :polynomial=, :initial_state=, :table=,
-            :reflect_input=, :reflect_output=, :xor_output=, :name=, :[]=
+    alias reflect_input? reflect_input
+    alias reflect_output? reflect_output
+  end
+
+  module Utils
+    def bitreflect8(n)
+      n    = n.to_i
+      n    = ((n & 0x55) <<  1) | ((n >>  1) & 0x55)
+      n    = ((n & 0x33) <<  2) | ((n >>  2) & 0x33)
+      return ((n & 0x0f) <<  4) |  (n >>  4) # 0x0f
+    end
+
+    def bitreflect16(n)
+      n    = n.to_i
+      n    = ((n & 0x5555) <<  1) | ((n >>  1) & 0x5555)
+      n    = ((n & 0x3333) <<  2) | ((n >>  2) & 0x3333)
+      n    = ((n & 0x0f0f) <<  4) | ((n >>  4) & 0x0f0f)
+      return ((n & 0x00ff) <<  8) |  (n >>  8) # 0x00ff
+    end
+
+    def bitreflect32(n)
+      n    = n.to_i
+      n    = ((n & 0x55555555) <<  1) | ((n >>  1) & 0x55555555)
+      n    = ((n & 0x33333333) <<  2) | ((n >>  2) & 0x33333333)
+      n    = ((n & 0x0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f)
+      n    = ((n & 0x00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff)
+      return ((n & 0x0000ffff) << 16) |  (n >> 16) # 0x0000ffff
+    end
+
+    def bitreflect64(n)
+      n    = n.to_i
+      n    = ((n & 0x5555555555555555) <<  1) | ((n >>  1) & 0x5555555555555555)
+      n    = ((n & 0x3333333333333333) <<  2) | ((n >>  2) & 0x3333333333333333)
+      n    = ((n & 0x0f0f0f0f0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f0f0f0f0f)
+      n    = ((n & 0x00ff00ff00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff00ff00ff)
+      n    = ((n & 0x0000ffff0000ffff) << 16) | ((n >> 16) & 0x0000ffff0000ffff)
+      return ((n & 0x00000000ffffffff) << 32) |  (n >> 32) # 0x00000000ffffffff
+    end
+
+    def bitreflect128(n)
+      n    = n.to_i
+      n    = ((n & 0x55555555555555555555555555555555) <<  1) | ((n >>  1) & 0x55555555555555555555555555555555)
+      n    = ((n & 0x33333333333333333333333333333333) <<  2) | ((n >>  2) & 0x33333333333333333333333333333333)
+      n    = ((n & 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f) <<  4) | ((n >>  4) & 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f)
+      n    = ((n & 0x00ff00ff00ff00ff00ff00ff00ff00ff) <<  8) | ((n >>  8) & 0x00ff00ff00ff00ff00ff00ff00ff00ff)
+      n    = ((n & 0x0000ffff0000ffff0000ffff0000ffff) << 16) | ((n >> 16) & 0x0000ffff0000ffff0000ffff0000ffff)
+      n    = ((n & 0x00000000ffffffff00000000ffffffff) << 32) | ((n >> 32) & 0x00000000ffffffff00000000ffffffff)
+      return ((n & 0x0000000000000000ffffffffffffffff) << 64) |  (n >> 64) # 0x0000000000000000ffffffffffffffff
     end
   end
 end
