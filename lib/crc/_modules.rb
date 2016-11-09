@@ -19,7 +19,7 @@ class CRC
   LIST = [
     #
     # bit size,  polynomial,              initial crc,
-    #                refrect input,                xor output,
+    #                reflect input,                xor output,
     #                      reflect output,                       crc("123456789"), names...
     #
     [ 1,               0x01,  true,  true,          0,     ~0,               0x01, "CRC-1"],
@@ -114,6 +114,7 @@ class CRC
     [32,         0x000000AF, false, false,          0,      0,         0xBD0BE338, "CRC-32-XFER", "XFER"],
     [40,       0x0004820009, false, false,         ~0,     ~0,       0xD4164FC646, "CRC-40-GSM"],
     [64, 0x42F0E1EBA9EA3693,  true,  true,          0,     ~0, 0x995DC9BBDF1939FA, "CRC-64-XZ", "CRC-64"],
+    [64, 0xAD93D23594C935A9,  true,  true,         ~0,      0, 0xCAA717168609F281, "CRC-64-JONES"],
     [64, 0x42F0E1EBA9EA3693, false, false,          0,      0, 0x6C40DF5F0B497347, "CRC-64-ECMA", "CRC-64-ECMA-182"],
     [64, 0x42F0E1EBA9EA3693, false, false,          0,     ~0, 0x62EC59E3F1A4F00A, "CRC-64-WE"],
     [64, 0x000000000000001B,  true,  true,          0,      0, 0x46A5A9388A5BEFFE, "CRC-64-ISO", "CRC-64-ISO-3309"],

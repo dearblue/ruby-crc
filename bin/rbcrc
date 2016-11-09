@@ -1,0 +1,282 @@
+#!/usr/bin/env ruby
+
+require "crc/codegen"
+require "optparse"
+
+def parse_number(t)
+  case t.strip
+  when /^~(\w+)$/
+    ~Integer($1)
+  else
+    Integer(t)
+  end
+end
+
+mode = nil
+crc = nil
+crcname = nil
+bitsize = nil
+polynomial = nil
+initcrc = nil
+initstate = nil
+xormask = nil
+reflectin = nil
+reflectout = nil
+algorithm = CRC::ALGORITHM_SLICING_BY_16
+forceoverwrite = false
+verbose = 1
+
+OptionParser.new("usage: #{File.basename $0} [options] output-filename...", 12, " ").instance_eval do
+  on("-M crcname", "choose included crc name in library (``-l'' to print list)") do |x|
+    begin
+      crc = CRC.lookup(x)
+    rescue
+      raise OptionParser::InvalidOption,
+            "not matched crc name - #{x.strip} (if check name, use ``-l'' switch)"
+    end
+  end
+  on("-N crcname", "declare function name or class name [DEFAULT is filename]") { |x| crcname = x.strip }
+  on("-s bitsize", "declare crc bit size [REQUIRED for customized crc]") do |x|
+    bitsize = x.to_i
+    unless bitsize >= 1 && bitsize <= 64
+      raise OptionParser::InvalidOption,
+            "wrong bitsize (given #{bitsize}, expect 1..64)"
+    end
+  end
+  on("-p polynom", "declare crc polynomial [REQUIRED for customized crc]") do |x|
+    polynomial = Integer(x)
+  end
+  on("-c initcrc", "declare initial crc (not internal state) [DEFAULT: 0]") do |x|
+    initcrc = parse_number(x)
+    initstate = nil
+  end
+  on("-S initstate", " declare initial state (internal state) [DEFAULT: unset]") do |x|
+    initcrc = nil
+    initstate = parse_number(x)
+  end
+  on("-x xormask", "declare xor bit mask for when output [DEFAULT: ~0]") do |x|
+    xormask = parse_number(x)
+  end
+  on("-i", "reflect input [DEFAULT]") { |x| reflectin = true }
+  on("-I", "normal input (not reflect)") { |x| reflectin = false }
+  on("-o", "reflect output [DEFAULT]") { |x| reflectout = true }
+  on("-O", "normal output (not reflect)") { |x| reflectout = false }
+  on("-a algorithm", " switch algorithm (see below) (C file type only)") { |x|
+    xx = x.downcase.gsub(/[^0-9a-z]+/m, "")
+    algorithm = {
+      "bitbybit" => CRC::ALGORITHM_BITBYBIT,
+      "bitbybitfast" => CRC::ALGORITHM_BITBYBIT_FAST,
+      "halfbytetable" => CRC::ALGORITHM_HALFBYTE_TABLE,
+      "standardtable" => CRC::ALGORITHM_STANDARD_TABLE,
+      "sliceby4" => CRC::ALGORITHM_SLICING_BY_4,
+      "slicingby4" => CRC::ALGORITHM_SLICING_BY_4,
+      "sliceby8" => CRC::ALGORITHM_SLICING_BY_8,
+      "slicingby8" => CRC::ALGORITHM_SLICING_BY_8,
+      "sliceby16" => CRC::ALGORITHM_SLICING_BY_16,
+      "slicingby16" => CRC::ALGORITHM_SLICING_BY_16,
+    }[xx]
+    unless algorithm
+      raise OptionParser::InvalidOption,
+            "wrong algorithm name - ``#{x}'' (except bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table, slicing-by-4, slicing-by-8, slicing-by-16)"
+    end
+  }
+
+  separator ""
+
+  on("-l", "print crc names") { mode = :list }
+  on("-f", "force overwrite") { forceoverwrite = true }
+  on("-v", "increment verbosery level") { verbose += 1 }
+  on("-q", "quiet mode (reset verbosery level to zero)") { verbose = 0 }
+
+  separator <<-EOS
+
+About LICENSE for generated source code:
+  Generated code is under Creative Commons License Zero (CC0 / Public Domain).
+  See https://creativecommons.org/publicdomain/zero/1.0/
+
+Algorithms (C file type only):
+  bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table,
+  slicing-by-4, slicing-by-8, slicing-by-16
+
+Support export file types:
+  * .c for C (support C89, but required ``stdint.h'')
+  * .js for javascript (required ECMAScript 6th edition)
+  * .rb for ruby (for ruby-2.1+, jruby, and rubinius)
+                 (executable for ruby-1.8, ruby-1.9 and ruby-2.0)
+                 (executable for mruby and limitation bitsize by fixnum)
+
+examples:
+  * create crc-32 generator to c source (and header file)
+    $ rbcrc crc32.c
+
+  * create crc-32c generator to ruby source
+    $ rbcrc crc32c.rb
+
+  * create crc-30-cdma generator to javascript source
+    $ rbcrc crc30cdma.js
+
+  * create crc-32 generator to ``crc.c'', ``crc.rb'' and ``crc.js''
+    $ rbcrc -Mcrc32 crc.c crc.rb crc.js
+
+  * create customized crc generator (as mycrc function) to ``mycrc.c''
+    $ rbcrc -s15 -p0x6789 -io -r0 -x~0 mycrc.c
+
+  * create customized crc generator (as MyCRC class) to ``mycrc_1.rb''
+    $ rbcrc -s39 -p0x987654321 -IO -r0 -x1 -NMyCRC mycrc_1.rb
+  EOS
+
+  begin
+    parse!
+
+    if bitsize && polynomial.nil?
+      raise OptionParser::InvalidOption,
+            "given ``-s'' switch only (need ``-p'' switch too)"
+    end
+  rescue OptionParser::InvalidOption
+    $stderr.puts <<-ERRORTEXT
+#$0: #$! (#{$!.class})
+\tor enter ``#$0 --help'' to print help.
+    ERRORTEXT
+    exit 1
+  end
+
+  if ARGV.empty? && mode.nil?
+    puts help
+    exit 1
+  end
+end
+
+def write_to_file(forceoverwrite, *filenames)
+  unless forceoverwrite
+    isexist = false
+    filenames.each do |nm|
+      next unless File.exist?(nm)
+      $stderr.puts "#$0: file exist - #{nm} (please use ``-f'' switch, if you want to overwrite)\n"
+      isexist = true
+    end
+
+    return nil if isexist
+  end
+
+  begin
+    cleanup = true
+    files = filenames.map do |nm|
+      File.open(nm, "ab") { } # write test
+      fd = File.open(nm + "~", "wb")
+      fd.define_singleton_method(:path, -> { nm })
+      fd
+    end
+    yield *files
+    cleanup = false
+  ensure
+    if files
+      if cleanup
+        files.each { |fd| fd.close rescue nil; File.unlink fd.path + "~" rescue nil }
+      else
+        files.each { |fd| fd.close; File.rename fd.path + "~", fd.path }
+      end
+    end
+  end
+end
+
+begin
+  case mode
+  when :list
+    case verbose
+    when 0, 1
+      puts CRC::LIST.map {|e| e[7 .. -1] }.join(", ")
+    when 2
+      puts CRC::LIST.map {|e| e[7 .. -1].join(", ") }.join("\n")
+    else
+      puts "## This is YAML format\n"
+      CRC::LIST.each do |e|
+        bytesize = (e[0] + 7) / 8
+        bitmask = ~(~0 << e[0])
+        hex = ->(n) { "0x%0*X" % [bytesize * 2, bitmask & n] }
+        names = e[8 .. -1]
+        if names.empty?
+          names = nil
+        else
+          names = <<-YAML_FORMAT.chomp!
+
+  another names:
+  - "#{names.join(%("\n  - "))}"
+          YAML_FORMAT
+        end
+        puts <<-YAML_FORMAT
+"#{e[7]}":
+  bitsize:        #{e[0]}
+  polynomial:     #{hex[e[1]]}
+  reflect input:  #{e[2].inspect}
+  reflect output: #{e[3].inspect}
+  initial crc:    #{hex[e[4]]}
+  xor output:     #{hex[e[5]]}#{names}
+        YAML_FORMAT
+      end
+    end
+  else
+    ARGV.each do |path|
+      begin
+        basename = File.basename path, ".*"
+        type = File.extname path
+
+        if bitsize
+          wxor = xormask || ~0
+          wcrc = crc || CRC.new(bitsize, polynomial,
+                                initcrc || (initstate ? (initstate ^ wxor) : 0),
+                                reflectin, reflectout, wxor)
+          wcrcname = crcname || basename
+        else
+          begin
+            wcrc = crc || CRC.lookup(basename)
+          rescue
+            raise "not matched crc name from filename - #{basename} (if you want check name, use ``-l'' switch)"
+          end
+
+          if initcrc || initstate || xormask || !reflectin.nil? || !reflectout.nil?
+            wxor = xormask || wcrc.xor_output
+            wcrc = CRC.new(wcrc.bitsize, wcrc.polynomial,
+                           initcrc || (initstate ? (initstate ^ wxor) : wcrc.initial_crc),
+                           reflectin.nil? ? wcrc.reflect_input? : reflectin,
+                           reflectout.nil? ? wcrc.reflect_output? : reflectout,
+                           wxor)
+            wcrcname = crcname || basename
+          end
+        end
+
+        case type
+        when ".c"
+          write_to_file(forceoverwrite, path.sub(/\.c$/i, ".h"), path) do |cheader, csource|
+            code = wcrc.dump_to_c(wcrcname, File.basename(cheader.path), File.basename(csource.path),
+                                 indent: 4, algorithm: algorithm)
+            cheader << code[:header]
+            csource << code[:source]
+          end
+        when ".js"
+          if wcrc.bitsize > 32
+            raise "bitsize is too big for javascript (given #{wcrc.bitsize}, expect 1..32)"
+          end
+
+          write_to_file(forceoverwrite, path) do |jssource|
+            code = wcrc.dump_to_javascript(wcrcname)
+            jssource << code[:source]
+          end
+        when ".rb"
+          write_to_file(forceoverwrite, path) do |rbsource|
+            code = wcrc.dump_to_ruby(wcrcname)
+            rbsource << code[:source]
+          end
+        else
+          raise "not supported for ``#{type}'' file type"
+        end
+      rescue
+        if $-d
+          $stderr.puts $@.join("\n\t").sub(/$/, ": #$! (#{$!.class})")
+        else
+          $stderr.puts "#$0: #$! - #{path}\n"
+        end
+      end
+    end
+  end
+rescue Errno::EPIPE
+end

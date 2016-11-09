@@ -17,8 +17,8 @@ class CRC
     # * crc32("123456789????") の結果が 0 となるような、???? の部分を逆算する
     #
     #     seq = "123456789"
-    #     seq << CRC::CRC32.acrc(seq)
-    #     p CRC::CRC32[seq] # => #<CRC::CRC32:00000000>
+    #     arced_seq = CRC::CRC32.acrc(seq)
+    #     p CRC::CRC32[seq + arced_seq] # => #<CRC::CRC32:00000000>
     #
     # * crc32("123456789????ABCDEFG") の結果が 0 となるような、???? の部分を逆算する
     #

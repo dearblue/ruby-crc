@@ -1,6 +1,7 @@
 #!ruby
 
 #--
+# File:: _byruby.rb
 # Author:: dearblue <dearblue@users.osdn.me>
 # License:: Creative Commons License Zero (CC0 / Public Domain)
 #++
@@ -8,7 +9,7 @@
 #
 # \* \* \* \* \* \* \* \*
 #
-# Ruby implemented CRC generator.
+# Pure ruby implemented general CRC generator.
 # It's used slice-by-16 algorithm with byte-order free.
 # This is based on the Intel's slice-by-eight algorithm.
 #
@@ -21,10 +22,6 @@
 #   * http://tukaani.org/xz/
 #   * xz-5.2.2/src/liblzma/check/crc32_fast.c
 #   * xz-5.2.2/src/liblzma/check/crc32_tablegen.c
-#
-# If defined "RUBY_CRC_NOFAST=2" enviroment variable, switch to lookup-table algorithm.
-#
-# If defined "RUBY_CRC_NOFAST=3" enviroment variable, switch to reference algorithm.
 #
 class CRC
   class << self
@@ -111,7 +108,7 @@ class CRC
       end
     end
 
-    def update_with_slice_by_eight(seq, s)
+    def update_with_slice_by_16(seq, s)
       tX = table
       t0 = tX[ 0]; t1 = tX[ 1]; t2 = tX[ 2]; t3 = tX[ 3]
       t4 = tX[ 4]; t5 = tX[ 5]; t6 = tX[ 6]; t7 = tX[ 7]
@@ -120,15 +117,29 @@ class CRC
 
       i = 0
       ii = seq.bytesize
-      iii = ii & ~15
+      ii16 = ii & ~15
 
       if reflect_input
-        if bitsize <= 32
-          # speed improvement for 32-bits CRC
+        case
+        when bitsize > 32
           i = 0
-          while i < iii
+          while i < ii16
             s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8) & 0xff] ^
                 tD[seq.getbyte(i +  2) ^ (s >> 16) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 24) & 0xff] ^
+                tB[seq.getbyte(i +  4) ^ (s >> 32) & 0xff] ^ tA[seq.getbyte(i +  5) ^ (s >> 40) & 0xff] ^
+                t9[seq.getbyte(i +  6) ^ (s >> 48) & 0xff] ^ t8[seq.getbyte(i +  7) ^ (s >> 56)       ] ^
+                t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
+                t5[seq.getbyte(i + 10)                   ] ^ t4[seq.getbyte(i + 11)                   ] ^
+                t3[seq.getbyte(i + 12)                   ] ^ t2[seq.getbyte(i + 13)                   ] ^
+                t1[seq.getbyte(i + 14)                   ] ^ t0[seq.getbyte(i + 15)                   ]
+            i += 16
+          end
+        when bitsize > 16
+          # speed improvement for 32-bits CRC
+          i = 0
+          while i < ii16
+            s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8) & 0xff] ^
+                tD[seq.getbyte(i +  2) ^ (s >> 16) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 24)       ] ^
                 tB[seq.getbyte(i +  4)                   ] ^ tA[seq.getbyte(i +  5)                   ] ^
                 t9[seq.getbyte(i +  6)                   ] ^ t8[seq.getbyte(i +  7)                   ] ^
                 t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
@@ -137,13 +148,14 @@ class CRC
                 t1[seq.getbyte(i + 14)                   ] ^ t0[seq.getbyte(i + 15)                   ]
             i += 16
           end
-        else
+        else # when bitsize <= 16
+          # speed improvement for 16-bits CRC
           i = 0
-          while i < iii
-            s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8) & 0xff] ^
-                tD[seq.getbyte(i +  2) ^ (s >> 16) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 24) & 0xff] ^
-                tB[seq.getbyte(i +  4) ^ (s >> 32) & 0xff] ^ tA[seq.getbyte(i +  5) ^ (s >> 40) & 0xff] ^
-                t9[seq.getbyte(i +  6) ^ (s >> 48) & 0xff] ^ t8[seq.getbyte(i +  7) ^ (s >> 56) & 0xff] ^
+          while i < ii16
+            s = tF[seq.getbyte(i     ) ^ (s      ) & 0xff] ^ tE[seq.getbyte(i +  1) ^ (s >>  8)       ] ^
+                tD[seq.getbyte(i +  2)                   ] ^ tC[seq.getbyte(i +  3)                   ] ^
+                tB[seq.getbyte(i +  4)                   ] ^ tA[seq.getbyte(i +  5)                   ] ^
+                t9[seq.getbyte(i +  6)                   ] ^ t8[seq.getbyte(i +  7)                   ] ^
                 t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
                 t5[seq.getbyte(i + 10)                   ] ^ t4[seq.getbyte(i + 11)                   ] ^
                 t3[seq.getbyte(i + 12)                   ] ^ t2[seq.getbyte(i + 13)                   ] ^
@@ -152,26 +164,65 @@ class CRC
           end
         end
 
-        (iii...ii).each do |n|
+        (i...ii).each do |n|
           s = t0[seq.getbyte(n) ^ s & 0xff] ^ (s >> 8)
         end
 
         s
       else
         Aux.slide_to_head(bitsize, s, polynomial, bitmask) do |s, poly, csh, head, carries|
-          sh = 64 - (head + 1)
+          case
+          when bitsize > 32
+            sh = 64 - (head + 1)
 
-          while i < iii
-            s <<= sh
-            s = t7[seq.getbyte(i    ) ^ (s >> 56) & 0xff] ^ t6[seq.getbyte(i + 1) ^ (s >> 48) & 0xff] ^
-                t5[seq.getbyte(i + 2) ^ (s >> 40) & 0xff] ^ t4[seq.getbyte(i + 3) ^ (s >> 32) & 0xff] ^
-                t3[seq.getbyte(i + 4) ^ (s >> 24) & 0xff] ^ t2[seq.getbyte(i + 5) ^ (s >> 16) & 0xff] ^
-                t1[seq.getbyte(i + 6) ^ (s >>  8) & 0xff] ^ t0[seq.getbyte(i + 7) ^ (s >>  0) & 0xff]
-            i += 8
+            while i < ii16
+              s <<= sh
+              s = tF[seq.getbyte(i     ) ^ (s >> 56)       ] ^ tE[seq.getbyte(i +  1) ^ (s >> 48) & 0xff] ^
+                  tD[seq.getbyte(i +  2) ^ (s >> 40) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s >> 32) & 0xff] ^
+                  tB[seq.getbyte(i +  4) ^ (s >> 24) & 0xff] ^ tA[seq.getbyte(i +  5) ^ (s >> 16) & 0xff] ^
+                  t9[seq.getbyte(i +  6) ^ (s >>  8) & 0xff] ^ t8[seq.getbyte(i +  7) ^ (s      ) & 0xff] ^
+                  t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
+                  t5[seq.getbyte(i + 10)                   ] ^ t4[seq.getbyte(i + 11)                   ] ^
+                  t3[seq.getbyte(i + 12)                   ] ^ t2[seq.getbyte(i + 13)                   ] ^
+                  t1[seq.getbyte(i + 14)                   ] ^ t0[seq.getbyte(i + 15)                   ]
+              i += 16
+            end
+          when bitsize > 16
+            # speed improvement for 32-bits CRC
+            sh = 32 - (head + 1)
+
+            while i < ii16
+              s <<= sh
+              s = tF[seq.getbyte(i     ) ^ (s >> 24)       ] ^ tE[seq.getbyte(i +  1) ^ (s >> 16) & 0xff] ^
+                  tD[seq.getbyte(i +  2) ^ (s >>  8) & 0xff] ^ tC[seq.getbyte(i +  3) ^ (s      ) & 0xff] ^
+                  tB[seq.getbyte(i +  4)                   ] ^ tA[seq.getbyte(i +  5)                   ] ^
+                  t9[seq.getbyte(i +  6)                   ] ^ t8[seq.getbyte(i +  7)                   ] ^
+                  t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
+                  t5[seq.getbyte(i + 10)                   ] ^ t4[seq.getbyte(i + 11)                   ] ^
+                  t3[seq.getbyte(i + 12)                   ] ^ t2[seq.getbyte(i + 13)                   ] ^
+                  t1[seq.getbyte(i + 14)                   ] ^ t0[seq.getbyte(i + 15)                   ]
+              i += 16
+            end
+          else # when bitsize <= 16
+            # speed improvement for 16-bits CRC
+            sh = 16 - (head + 1)
+
+            while i < ii16
+              s <<= sh
+              s = tF[seq.getbyte(i     ) ^ (s >>  8)       ] ^ tE[seq.getbyte(i +  1) ^ (s      ) & 0xff] ^
+                  tD[seq.getbyte(i +  2)                   ] ^ tC[seq.getbyte(i +  3)                   ] ^
+                  tB[seq.getbyte(i +  4)                   ] ^ tA[seq.getbyte(i +  5)                   ] ^
+                  t9[seq.getbyte(i +  6)                   ] ^ t8[seq.getbyte(i +  7)                   ] ^
+                  t7[seq.getbyte(i +  8)                   ] ^ t6[seq.getbyte(i +  9)                   ] ^
+                  t5[seq.getbyte(i + 10)                   ] ^ t4[seq.getbyte(i + 11)                   ] ^
+                  t3[seq.getbyte(i + 12)                   ] ^ t2[seq.getbyte(i + 13)                   ] ^
+                  t1[seq.getbyte(i + 14)                   ] ^ t0[seq.getbyte(i + 15)                   ]
+              i += 16
+            end
           end
 
           carries8 = carries >> 7
-          (iii...ii).each do |n|
+          (i...ii).each do |n|
             s = t0[(s >> csh) ^ seq.getbyte(n)] ^ ((carries8 & s) << 8)
           end
           s
@@ -180,10 +231,14 @@ class CRC
     end
 
     def table
-      if reflect_input
-        @table = CRC.build_reflect_table(bitsize, polynomial, slice: 16)
+      if SLICING_SIZE
+        if reflect_input
+          @table = CRC.build_reflect_table(bitsize, polynomial, slice: SLICING_SIZE)
+        else
+          @table = CRC.build_table(bitsize, polynomial, slice: SLICING_SIZE)
+        end
       else
-        @table = CRC.build_table(bitsize, polynomial, slice: 16)
+        @table = nil
       end
 
       singleton_class.class_eval "attr_reader :table"
@@ -193,11 +248,14 @@ class CRC
 
     case ENV["RUBY_CRC_NOFAST"].to_i
     when 0, 1
-      alias update update_with_slice_by_eight
+      alias update update_with_slice_by_16
+      SLICING_SIZE = 16
     when 2
       alias update update_with_lookup_table
+      SLICING_SIZE = 1
     else
       alias update update_with_reference
+      SLICING_SIZE = nil
     end
   end
 

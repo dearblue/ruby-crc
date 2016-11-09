@@ -2,11 +2,14 @@
 
 if ENV["RUBY_CRC_NOFAST"].to_i > 0
   require_relative "crc/_byruby"
+  CRC::IMPLEMENT = :ruby
 else
   begin
     require File.join("crc", RUBY_VERSION[/\d+\.\d+/], "_turbo.so")
+    CRC::IMPLEMENT = :turbo
   rescue LoadError
     require_relative "crc/_byruby"
+    CRC::IMPLEMENT = :ruby
   end
 end
 
@@ -74,15 +77,22 @@ class CRC
       bitmask = ~(~0 << bitsize)
       table = []
       Aux.slide_to_head(bitsize, 0, bitmask & polynomial, bitmask) do |xx, poly, csh, head, carries, pad|
-        slice.times do |s|
+        table << (t = [])
+        256.times do |b|
+          b <<= csh
+          8.times { b = (b[head] == 0) ? (b << 1) : (((carries & b) << 1) ^ poly) }
+          t << b
+        end
+        t.freeze unless unfreeze
+
+        carries8 = carries >> 7
+        (1...slice).step do
+          tt = table[-1]
           table << (t = [])
           256.times do |b|
-            r = (s == 0 ? (b << csh) : (table[-2][b]))
-            8.times { r = (r[head] == 0) ? (r << 1) : (((carries & r) << 1) ^ poly) }
-            t << r
+            t << (table[0][tt[b] >> csh] ^ ((carries8 & tt[b]) << 8))
           end
           t.freeze unless unfreeze
-          t
         end
         0
       end
@@ -93,15 +103,21 @@ class CRC
     def build_reflect_table(bitsize, polynomial, unfreeze = false, slice: 16)
       polynomial = bitreflect(polynomial, bitsize)
       table = []
-      slice.times do |s|
+
+      table << (t = [])
+      256.times do |b|
+        8.times { b = (b[0] == 0) ? (b >> 1) : ((b >> 1) ^ polynomial) }
+        t << b
+      end
+      t.freeze unless unfreeze
+
+      (1...slice).step do
+        tt = table[-1]
         table << (t = [])
         256.times do |b|
-          r = (s == 0) ? b : table[-2][b]
-          8.times { r = (r[0] == 0) ? (r >> 1) : ((r >> 1) ^ polynomial) }
-          t << r
+          t << (table[0][tt[b] & 0xff] ^ (tt[b] >> 8))
         end
         t.freeze unless unfreeze
-        t
       end
 
       table.freeze unless unfreeze
@@ -139,9 +155,6 @@ class CRC
 #{indent}].freeze
       EOS
     end
-
-    #puts export_table(build_table(16, 0x1021), 16, 8); #abort "DEBUG EXIT"
-    #puts export_table(build_table!(32, 0xEDB88320), 32, 8); abort "DEBUG EXIT"
   end
 
   extend Utils
@@ -492,11 +505,22 @@ class CRC
       checked = crc.crc("123456789")
       case check
       when nil
-        $stderr.puts "| %20s(\"123456789\") = %16X (check only)\n" % [crc.name, checked]
+        $stderr.puts "| %20s(\"123456789\" * 1) = %16X (check only)\n" % [crc.name, checked]
       when checked
         ;
       else
-        $stderr.puts "| %20s(\"123456789\") = %16X (expect to %X)\n" % [crc.name, checked, check]
+        $stderr.puts "| %20s(\"123456789\" * 1) = %16X (expect to %X)\n" % [crc.name, checked, check]
+      end
+
+      check = 9.times.reduce(crc.new) { |a, x| a + crc[crc::CHECK, 9] }
+      checked = crc["123456789" * 9]
+      case check
+      when nil
+        $stderr.puts "| %20s(\"123456789\" * 9) = %16X (check only)\n" % [crc.name, checked]
+      when checked
+        ;
+      else
+        $stderr.puts "| %20s(\"123456789\" * 9) = %16X (expect to %X)\n" % [crc.name, checked, check]
       end
     end
     $stderr.puts "#{__FILE__}:#{__LINE__}: DONE SELF CHECK\n"

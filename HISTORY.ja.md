@@ -2,6 +2,19 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
+## crc-0.3.1 (平成28年11月10日 木曜日)
+
+  * メソッド名 CRC#update\_with\_slice\_by\_eight を CRC#update\_with\_slice\_by\_16 に変更
+  * 非 reflect-input も slicing-by-16 となるように修正
+  * CRC#update\_with\_slice\_by\_16 の 16 ビット以下の crc に対する最適化
+  * crc 計算におけるルックアップテーブルの作成の高速化
+  * 実装が C か ruby かを判別しやすくするための定数 CRC::IMPLEMENT を追加
+  * CRC-64-JONES を追加
+  * 特定の CRC を計算するソースコード出力機能を追加
+      * c、ruby、javascript 向けのソースコードを出力するための機能を追加しました。
+      * 今のところアルゴリズムは c を除き slicing-by-16 に固定となります。
+
+
 ## crc-0.3 (平成28年7月31日 日曜日)
 
 互換性を損なう変更があります。

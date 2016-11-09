@@ -1,13 +1,18 @@
-require_relative "lib/crc/version"
+#!ruby
+
+unless File.read("README.md", mode: "rt") =~ /^\s*\*\s*version: (\d+(?:\.\w+)+)/i
+  raise "version number is not found in ``README.md''"
+end
+
+ver = $1
 
 GEMSTUB = Gem::Specification.new do |s|
   s.name = "crc"
-  s.version = CRC::VERSION
+  s.version = ver
   s.summary = "general CRC generator"
   s.description = <<EOS
-This is a general CRC (Cyclic Redundancy Check) generator for ruby.
-It is written by pure ruby.
-Customization is posible for 1 to 64 bit width, any polynomial primitives, and with/without bit reflection input/output.
+Pure ruby implemented general CRC (Cyclic Redundancy Check) generator.
+Customization is posible for 1 to 64 bit width, any polynomials, and with/without bit reflection input/output.
 If you need more speed, please use crc-turbo.
 EOS
   s.homepage = "https://osdn.jp/projects/rutsubo/"
@@ -16,7 +21,22 @@ EOS
   s.email = "dearblue@users.osdn.me"
 
   s.required_ruby_version = ">= 2.0"
-  s.add_development_dependency "rake"
+  s.add_development_dependency "rake", "~> 11"
 end
+
+verfile = "lib/crc/version.rb"
+task "version" => verfile
+file verfile => "README.md" do
+  File.write(verfile, <<-"EOS", mode: "wb")
+#!ruby
+
+class CRC
+  VERSION = "#{ver}"
+end
+  EOS
+end
+
+LIB << verfile
+LIB.uniq!
 
 EXTRA << "benchmark.rb"
