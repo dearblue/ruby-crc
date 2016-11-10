@@ -20,8 +20,8 @@ polynomial = nil
 initcrc = nil
 initstate = nil
 xormask = nil
-reflectin = nil
-reflectout = nil
+normalin = nil
+normalout = nil
 algorithm = CRC::ALGORITHM_SLICING_BY_16
 forceoverwrite = false
 verbose = 1
@@ -57,10 +57,10 @@ OptionParser.new("usage: #{File.basename $0} [options] output-filename...", 12, 
   on("-x xormask", "declare xor bit mask for when output [DEFAULT: ~0]") do |x|
     xormask = parse_number(x)
   end
-  on("-i", "reflect input [DEFAULT]") { |x| reflectin = true }
-  on("-I", "normal input (not reflect)") { |x| reflectin = false }
-  on("-o", "reflect output [DEFAULT]") { |x| reflectout = true }
-  on("-O", "normal output (not reflect)") { |x| reflectout = false }
+  on("-i", "reflect input [DEFAULT]") { |x| normalin = false }
+  on("-I", "normal input (not reflect)") { |x| normalin = true }
+  on("-o", "reflect output [DEFAULT]") { |x| normalout = false }
+  on("-O", "normal output (not reflect)") { |x| normalout = true }
   on("-a algorithm", " switch algorithm (see below) (C file type only)") { |x|
     xx = x.downcase.gsub(/[^0-9a-z]+/m, "")
     algorithm = {
@@ -224,7 +224,7 @@ begin
           wxor = xormask || ~0
           wcrc = crc || CRC.new(bitsize, polynomial,
                                 initcrc || (initstate ? (initstate ^ wxor) : 0),
-                                reflectin, reflectout, wxor)
+                                !normalin, !normalout, wxor)
           wcrcname = crcname || basename
         else
           begin
@@ -233,12 +233,12 @@ begin
             raise "not matched crc name from filename - #{basename} (if you want check name, use ``-l'' switch)"
           end
 
-          if initcrc || initstate || xormask || !reflectin.nil? || !reflectout.nil?
+          if initcrc || initstate || xormask || !normalin.nil? || !normalout.nil?
             wxor = xormask || wcrc.xor_output
             wcrc = CRC.new(wcrc.bitsize, wcrc.polynomial,
                            initcrc || (initstate ? (initstate ^ wxor) : wcrc.initial_crc),
-                           reflectin.nil? ? wcrc.reflect_input? : reflectin,
-                           reflectout.nil? ? wcrc.reflect_output? : reflectout,
+                           normalin.nil? ? wcrc.reflect_input? : !normalin,
+                           normalout.nil? ? wcrc.reflect_output? : !normalout,
                            wxor)
             wcrcname = crcname || basename
           end

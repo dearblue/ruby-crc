@@ -2,6 +2,11 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
+## crc-0.3.1.1 (平成28年11月10日 木曜日)
+
+  * rbcrc において reflect-input/output が既定値となっていなかったため修正
+
+
 ## crc-0.3.1 (平成28年11月10日 木曜日)
 
   * メソッド名 CRC#update\_with\_slice\_by\_eight を CRC#update\_with\_slice\_by\_16 に変更

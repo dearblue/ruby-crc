@@ -20,7 +20,7 @@ If you need more speed, please use [crc-turbo](https://rubygems/gems/crc-turbo).
   * author: dearblue (mailto:dearblue@users.osdn.me)
   * report issue to: <https://osdn.jp/projects/rutsubo/ticket/>
   * how to install: ``gem install crc``
-  * version: 0.3.1
+  * version: 0.3.1.1
   * release quality: technical preview
   * licensing: BSD-2-Clause<br>any parts are under Creative Commons License Zero (CC0 / Public Domain), and zlib-style License.
   * dependency gems: none
