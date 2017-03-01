@@ -196,6 +196,64 @@ class CRC
   end
 
   module ModuleClass
+    #
+    # call-seq:
+    #   shiftbits(state, bitset) -> state
+    #
+    def shiftbits(state, bitset)
+      bitset = Array(bitset)
+
+      if reflect_input?
+        poly = CRC.bitreflect(polynomial, bitsize)
+        bitset.each do |b|
+          state ^= (1 & b)
+          state = (state[0] == 0) ? (state >> 1) : ((state >> 1) ^ poly)
+        end
+
+        state
+      else
+        Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
+          bitset.each do |b|
+            s ^= (1 & b) << head
+            s = (s[head] == 0) ? (s << 1) : (((carries & s) << 1) ^ poly)
+          end
+
+          s
+        end
+      end
+    end
+
+    #
+    # call-seq:
+    #   shiftbytes(state, byteset)
+    #
+    def shiftbytes(state, byteset)
+      byteset = Array(byteset)
+
+      if reflect_input?
+        poly = CRC.bitreflect(polynomial, bitsize)
+        byteset.each do |b|
+          state ^= 0xff & b
+          8.times do
+            state = (state[0] == 0) ? (state >> 1) : ((state >> 1) ^ poly)
+          end
+        end
+
+        state
+      else
+        Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
+          byteset.each do |b|
+            s ^= (0xff & b) << csh
+            8.times do
+              s = (s[head] == 0) ? (s << 1) : (((carries & s) << 1) ^ poly)
+            end
+          end
+
+          s
+        end
+      end
+    end
+
     def setup(crc = nil)
       crc ||= initial_crc
       crc = CRC.bitreflect(crc, bitsize) if reflect_input? ^ reflect_output?
