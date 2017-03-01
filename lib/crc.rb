@@ -227,6 +227,8 @@ class CRC
     # call-seq:
     #   shiftbytes(state, byteset)
     #
+    # standard input の場合は byte は上位ビットから、reflect input の場合は byte は下位ビットから計算されます。
+    #
     def shiftbytes(state, byteset)
       byteset = Array(byteset)
 
@@ -246,6 +248,101 @@ class CRC
             s ^= (0xff & b) << csh
             8.times do
               s = (s[head] == 0) ? (s << 1) : (((carries & s) << 1) ^ poly)
+            end
+          end
+
+          s
+        end
+      end
+    end
+
+    #
+    # call-seq:
+    #   unshiftbits(state, bitset)
+    #
+    # bitset を与えることで state となるような内部状態を逆算します。
+    #
+    def unshiftbits(state, bitset)
+      bitset = Array(bitset)
+
+      if reflect_input?
+        poly = CRC.bitreflect(polynomial, bitsize)
+        head = bitsize - 1
+        bitset.reverse_each do |b|
+          if state[head] == 0
+            state <<= 1
+          else
+            state ^= poly
+            state <<= 1
+            state |= 0x01
+          end
+
+          state ^= 1 & b
+        end
+
+        state
+      else
+        Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
+          headbit = 1 << head
+          bitset.reverse_each do |b|
+            if s[0] == 0
+              s >>= 1
+            else
+              s ^= poly
+              s >>= 1
+              s |= headbit
+            end
+
+            s ^= (1 & b) << head
+          end
+
+          s
+        end
+      end
+    end
+
+    #
+    # call-seq:
+    #   unshiftbytes(state, byteset)
+    #
+    # byteset を与えることで state となるような内部状態を逆算します。
+    #
+    def unshiftbytes(state, byteset)
+      byteset = Array(byteset)
+
+      if reflect_input?
+        poly = CRC.bitreflect(polynomial, bitsize)
+        head = bitsize - 1
+        byteset.reverse_each do |b|
+          8.times do |i|
+            if state[head] == 0
+              state <<= 1
+            else
+              state ^= poly
+              state <<= 1
+              state |= 0x01
+            end
+
+            state ^= 1 & b[7 - i]
+          end
+        end
+
+        state
+      else
+        Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
+          headbit = 1 << head
+          lowoff = (head + 1) - bitsize
+          byteset.reverse_each do |b|
+            8.times do |i|
+              if s[lowoff] == 0
+                s >>= 1
+              else
+                s ^= poly
+                s >>= 1
+                s |= headbit
+              end
+
+              s ^= (1 & b[i]) << head
             end
           end
 
