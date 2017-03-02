@@ -284,8 +284,9 @@ class CRC
       else
         Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
           headbit = 1 << head
+          lowoff = (head + 1) - bitsize
           bitset.reverse_each do |b|
-            if s[0] == 0
+            if s[lowoff] == 0
               s >>= 1
             else
               s ^= poly
