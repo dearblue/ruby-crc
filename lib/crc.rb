@@ -198,9 +198,9 @@ class CRC
   module ModuleClass
     #
     # call-seq:
-    #   shiftbits(state, bitset) -> state
+    #   shiftbits(bitset, state) -> state
     #
-    def shiftbits(state, bitset)
+    def shiftbits(bitset, state)
       bitset = Array(bitset)
 
       if reflect_input?
@@ -225,11 +225,11 @@ class CRC
 
     #
     # call-seq:
-    #   shiftbytes(state, byteset)
+    #   shiftbytes(byteset, state)
     #
     # standard input の場合は byte は上位ビットから、reflect input の場合は byte は下位ビットから計算されます。
     #
-    def shiftbytes(state, byteset)
+    def shiftbytes(byteset, state)
       byteset = Array(byteset)
 
       if reflect_input?
@@ -258,11 +258,11 @@ class CRC
 
     #
     # call-seq:
-    #   unshiftbits(state, bitset)
+    #   unshiftbits(bitset, state)
     #
     # bitset を与えることで state となるような内部状態を逆算します。
     #
-    def unshiftbits(state, bitset)
+    def unshiftbits(bitset, state)
       bitset = Array(bitset)
 
       if reflect_input?
@@ -304,11 +304,11 @@ class CRC
 
     #
     # call-seq:
-    #   unshiftbytes(state, byteset)
+    #   unshiftbytes(byteset, state)
     #
     # byteset を与えることで state となるような内部状態を逆算します。
     #
-    def unshiftbytes(state, byteset)
+    def unshiftbytes(byteset, state)
       byteset = Array(byteset)
 
       if reflect_input?
