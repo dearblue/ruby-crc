@@ -8,13 +8,11 @@ class CRC
   module ModuleClass
     #
     # call-seq:
-    #   acrc(pre, post = nil, target_crc = 0) -> byte string as arc-code
+    #   acrc(pre, post = nil, targetcrc = 0) -> byte string as arc-code
     #
     # 目的となる crc になるように、指定された crc に続くバイト列を逆算します。
     #
     # 出力されるバイト列は、crc のビット数を表現できるバイト数となります。
-    #
-    # 現在のところ、reflect-input/output 限定となっています。
     #
     # * crc32("123456789????") の結果が 0 となるような、???? の部分を逆算する
     #
@@ -33,8 +31,8 @@ class CRC
     #
     #     seq1 = "123456789"
     #     seq2 = "ABCDEFG"
-    #     target_crc = 0x12345678
-    #     seq = seq1 + CRC::CRC32.acrc(seq1, seq2, target_crc) + seq2
+    #     targetcrc = 0x12345678
+    #     seq = seq1 + CRC::CRC32.acrc(seq1, seq2, targetcrc) + seq2
     #     p CRC::CRC32[seq] # => #<CRC::CRC32:12345678>
     #
     def acrc(pre, post = nil, targetcrc = 0)
