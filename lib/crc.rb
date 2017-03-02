@@ -44,6 +44,136 @@ class CRC
 
   extend Utils
 
+  module Extentions
+    # refinements
+    # * each_byte
+    # * reverse_each_byte
+    ;
+
+    refine Array do
+      def each_byte
+        return to_enum(:each_byte) unless block_given?
+        each { |ch| yield 0xff & ch }
+        self
+      end
+
+      def reverse_each_byte
+        return to_enum(:reverse_each_byte) unless block_given?
+        reverse_each { |ch| yield 0xff & ch }
+        self
+      end
+    end
+
+    refine BasicObject do
+      def each_byte(&block)
+        Array(self).each_byte(&block)
+      end
+
+      def reverse_each_byte(&block)
+        Array(self).reverse_each_byte(&block)
+      end
+    end
+
+    refine String do
+      def reverse_each_byte
+        return to_enum(:reverse_each_byte) unless block_given?
+        (bytesize - 1).downto(0) { |i| yield getbyte(i) }
+        self
+      end
+    end
+
+    # refinements:
+    # * convert_internal_state_for
+    # * convert_target_state_for
+    ;
+
+    refine BasicObject do
+      def convert_internal_state_for(crc)
+        raise TypeError, "cant convertion to #{crc.to_s} (for #{inspect})"
+      end
+
+      def convert_target_state_for(crc)
+        raise TypeError, "cant convertion to #{crc.to_s} (for #{inspect})"
+      end
+    end
+
+    refine NilClass do
+      def convert_internal_state_for(crc)
+        crc.initial_crc ^ crc.xor_output
+      end
+
+      def convert_target_state_for(crc)
+        crc.xor_output
+      end
+    end
+
+    refine String do
+      def convert_internal_state_for(crc)
+        crc.update(self, crc.setup(crc.initial_crc))
+      end
+    end
+
+    refine Integer do
+      def convert_internal_state_for(crc)
+        crc.bitmask & self
+      end
+
+      def convert_target_state_for(crc)
+        s = crc.bitmask & self ^ crc.xor_output
+        s = CRC.bitreflect(s, crc.bitsize) if crc.reflect_input?
+        s
+      end
+    end
+
+    refine CRC do
+      def convert_internal_state_for(crc)
+        unless crc.variant?(self)
+          raise "not variant crc module (expect #{crc.to_s}, but self is #{inspect})"
+        end
+
+        state
+      end
+
+      def convert_target_state_for(crc)
+        unless crc.variant?(self)
+          raise "not variant crc module (expect #{crc.to_s}, but self is #{inspect})"
+        end
+
+        state
+      end
+    end
+
+    # refinements:
+    # * splitbytes
+    ;
+
+    refine Integer do
+      def splitbytes(bucket, bytes, is_little_endian)
+        if is_little_endian
+          bytes.times { |i| bucket.pushbyte self >> (i * 8) }
+        else
+          (bytes - 1).downto(0) { |i| bucket.pushbyte self >> (i * 8) }
+        end
+
+        bucket
+      end
+    end
+
+    refine String do
+      def pushbyte(ch)
+        self << (0xff & ch).chr(Encoding::BINARY)
+      end
+    end
+
+    refine Array do
+      def pushbyte(ch)
+        self << (0xff & ch)
+      end
+    end
+  end
+
+  using Extentions
+
   #
   # Utilities.
   #
@@ -337,11 +467,9 @@ class CRC
     # standard input の場合は byte は上位ビットから、reflect input の場合は byte は下位ビットから計算されます。
     #
     def shiftbytes_by_bitbybit(byteset, state)
-      byteset = Array(byteset)
-
       if reflect_input?
         poly = CRC.bitreflect(polynomial, bitsize)
-        byteset.each do |b|
+        byteset.each_byte do |b|
           state ^= 0xff & b
           8.times do
             state = (state[0] == 0) ? (state >> 1) : ((state >> 1) ^ poly)
@@ -351,7 +479,7 @@ class CRC
         state
       else
         Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
-          byteset.each do |b|
+          byteset.each_byte do |b|
             s ^= (0xff & b) << csh
             8.times do
               s = (s[head] == 0) ? (s << 1) : (((carries & s) << 1) ^ poly)
@@ -416,12 +544,10 @@ class CRC
     # byteset を与えることで state となるような内部状態を逆算します。
     #
     def unshiftbytes_by_bitbybit(byteset, state)
-      byteset = Array(byteset)
-
       if reflect_input?
         poly = CRC.bitreflect(polynomial, bitsize)
         head = bitsize - 1
-        byteset.reverse_each do |b|
+        byteset.reverse_each_byte do |b|
           8.times do |i|
             if state[head] == 0
               state <<= 1
@@ -440,7 +566,7 @@ class CRC
         Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
           headbit = 1 << head
           lowoff = (head + 1) - bitsize
-          byteset.reverse_each do |b|
+          byteset.reverse_each_byte do |b|
             8.times do |i|
               if s[lowoff] == 0
                 s >>= 1
