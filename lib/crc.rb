@@ -305,9 +305,9 @@ class CRC
 
     #
     # call-seq:
-    #   shiftbits(bitset, state) -> state
+    #   shiftbits_by_bitbybit(bitset, state) -> state
     #
-    def shiftbits(bitset, state)
+    def shiftbits_by_bitbybit(bitset, state)
       bitset = Array(bitset)
 
       if reflect_input?
@@ -332,11 +332,11 @@ class CRC
 
     #
     # call-seq:
-    #   shiftbytes(byteset, state)
+    #   shiftbytes_by_bitbybit(byteset, state)
     #
     # standard input の場合は byte は上位ビットから、reflect input の場合は byte は下位ビットから計算されます。
     #
-    def shiftbytes(byteset, state)
+    def shiftbytes_by_bitbybit(byteset, state)
       byteset = Array(byteset)
 
       if reflect_input?
@@ -365,11 +365,11 @@ class CRC
 
     #
     # call-seq:
-    #   unshiftbits(bitset, state)
+    #   unshiftbits_by_bitbybit(bitset, state)
     #
     # bitset を与えることで state となるような内部状態を逆算します。
     #
-    def unshiftbits(bitset, state)
+    def unshiftbits_by_bitbybit(bitset, state)
       bitset = Array(bitset)
 
       if reflect_input?
@@ -411,11 +411,11 @@ class CRC
 
     #
     # call-seq:
-    #   unshiftbytes(byteset, state)
+    #   unshiftbytes_by_bitbybit(byteset, state)
     #
     # byteset を与えることで state となるような内部状態を逆算します。
     #
-    def unshiftbytes(byteset, state)
+    def unshiftbytes_by_bitbybit(byteset, state)
       byteset = Array(byteset)
 
       if reflect_input?
@@ -458,6 +458,11 @@ class CRC
         end
       end
     end
+
+    alias shiftbits shiftbits_by_bitbybit
+    alias shiftbytes shiftbytes_by_bitbybit
+    alias unshiftbits unshiftbits_by_bitbybit
+    alias unshiftbytes unshiftbytes_by_bitbybit
   end
 
   attr_accessor :state, :size
