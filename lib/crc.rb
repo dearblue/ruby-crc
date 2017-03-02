@@ -585,6 +585,68 @@ class CRC
       end
     end
 
+    def unshift_table
+      if reflect_input?
+        if bitsize < 8
+          pad = 8 - bitsize
+          shift = 0
+          lowestbit = 1 << pad
+        else
+          pad = 0
+          shift = bitsize - 8
+          lowestbit = 1
+        end
+        poly = CRC.bitreflect(polynomial, bitsize) << pad
+        head = bitsize - 1 + pad
+        @unshift_table = 256.times.map do |ch|
+          state = ch << shift
+          8.times do |i|
+            if state[head] == 0
+              state <<= 1
+            else
+              state ^= poly
+              state <<= 1
+              state ^= lowestbit
+            end
+          end
+
+          state >> pad
+        end
+      else
+        raise NotImplementedError
+      end
+
+      singleton_class.module_eval { attr_reader :unshift_table }
+
+      @unshift_table
+    end
+
+    def unshiftbytes_by_table(byteset, state)
+      if reflect_input?
+        table = unshift_table
+        if bitsize < 8
+          pad = 8 - bitsize
+          shift = 0
+          mask = bitmask
+          byteset.reverse_each_byte do |ch|
+            state = (state << 8) ^ ch
+            state = table[state >> bitsize] ^ (ch & mask)
+          end
+        else
+          shift = bitsize - 8
+          mask = ~(~0 << shift)
+          byteset.reverse_each_byte do |ch|
+            state = table[state >> shift] ^ ((state & mask) << 8)
+            state ^= ch
+          end
+        end
+
+        state
+      else
+        unshiftbytes_by_bitbybit(byteset, state)
+      end
+    end
+
     alias shiftbits shiftbits_by_bitbybit
     alias shiftbytes shiftbytes_by_bitbybit
     alias unshiftbits unshiftbits_by_bitbybit
