@@ -650,7 +650,7 @@ class CRC
     alias shiftbits shiftbits_by_bitbybit
     alias shiftbytes shiftbytes_by_bitbybit
     alias unshiftbits unshiftbits_by_bitbybit
-    alias unshiftbytes unshiftbytes_by_bitbybit
+    alias unshiftbytes unshiftbytes_by_table
   end
 
   attr_accessor :state, :size
