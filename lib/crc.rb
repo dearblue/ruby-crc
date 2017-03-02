@@ -196,6 +196,113 @@ class CRC
   end
 
   module ModuleClass
+    def setup(crc = nil)
+      crc ||= initial_crc
+      crc = CRC.bitreflect(crc, bitsize) if reflect_input? ^ reflect_output?
+      crc ^ xor_output
+    end
+
+    alias init setup
+
+    def finish(state)
+      state = CRC.bitreflect(state, bitsize) if reflect_input? ^ reflect_output?
+      state ^ xor_output
+    end
+
+    def crc(seq, crc = nil)
+      finish(update(seq, setup(crc)))
+    end
+
+    def digest(seq, crc = nil)
+      Aux.digest(crc(seq, crc), bitsize)
+    end
+
+    def hexdigest(seq, crc = nil)
+      Aux.hexdigest(crc(seq, crc), bitsize)
+    end
+
+    def variant?(obj)
+      case
+      when obj.kind_of?(CRC)
+        mod = obj.class
+      when obj.kind_of?(Class) && obj < CRC
+        mod = obj
+      else
+        return false
+      end
+
+      if bitsize == mod.bitsize &&
+         polynomial == mod.polynomial &&
+         reflect_input? == mod.reflect_input? &&
+         reflect_output? == mod.reflect_output? &&
+         xor_output == mod.xor_output
+        true
+      else
+        false
+      end
+    end
+
+    #
+    # call-seq:
+    #   combine(crc1, crc2) -> new combined crc
+    #   combine(crc1_int, crc2_int, crc2_len) -> new combined crc
+    #
+    def combine(*args)
+      case args.size
+      when 2
+        unless args[0].kind_of?(CRC) && args[1].kind_of?(CRC)
+          raise ArgumentError, "When given two arguments, both arguments are should be CRC instance"
+        end
+
+        crc1 + crc2
+      when 3
+        Aux.combine(Integer(args[0].to_i), Integer(args[1].to_i), Integer(args[2].to_i),
+                    bitsize, polynomial, initial_crc, reflect_input?, reflect_output?, xor_output)
+      else
+        raise ArgumentError, "wrong number of arguments (given #{args.size}, expect 2..3)"
+      end
+    end
+
+    def to_str
+      case
+      when bitsize > 64 then width = 20
+      when bitsize > 32 then width = 16
+      when bitsize > 16 then width =  8
+      when bitsize >  8 then width =  4
+      else                   width =  2
+      end
+
+      if reflect_input?
+        ref = " reflect-in#{reflect_output? ? "/out" : ""}"
+      else
+        ref = reflect_output? ? " reflect-out" : ""
+      end
+
+      case initial_crc
+      when 0        then init = "0"
+      when bitmask  then init = "~0"
+      when 1        then init = "1"
+      else               init = "0x%0#{width}X" % initial_crc
+      end
+
+      case xor_output
+      when 0        then xor = "0"
+      when bitmask  then xor = "~0"
+      when 1        then xor = "1"
+      else               xor = "0x%0#{width}X" % xor_output
+      end
+
+      "CRC-%d-0x%0#{width}X%s init=%s xor=%s" % [bitsize, polynomial, ref, init, xor]
+    end
+
+    def inspect
+      "#{super}{#{to_str}}"
+    end
+
+    def pretty_inspect(q)
+      q.text inspect
+    end
+
     #
     # call-seq:
     #   shiftbits(bitset, state) -> state
@@ -350,113 +457,6 @@ class CRC
           s
         end
       end
-    end
-
-    def setup(crc = nil)
-      crc ||= initial_crc
-      crc = CRC.bitreflect(crc, bitsize) if reflect_input? ^ reflect_output?
-      crc ^ xor_output
-    end
-
-    alias init setup
-
-    def finish(state)
-      state = CRC.bitreflect(state, bitsize) if reflect_input? ^ reflect_output?
-      state ^ xor_output
-    end
-
-    def crc(seq, crc = nil)
-      finish(update(seq, setup(crc)))
-    end
-
-    def digest(seq, crc = nil)
-      Aux.digest(crc(seq, crc), bitsize)
-    end
-
-    def hexdigest(seq, crc = nil)
-      Aux.hexdigest(crc(seq, crc), bitsize)
-    end
-
-    def variant?(obj)
-      case
-      when obj.kind_of?(CRC)
-        mod = obj.class
-      when obj.kind_of?(Class) && obj < CRC
-        mod = obj
-      else
-        return false
-      end
-
-      if bitsize == mod.bitsize &&
-         polynomial == mod.polynomial &&
-         reflect_input? == mod.reflect_input? &&
-         reflect_output? == mod.reflect_output? &&
-         xor_output == mod.xor_output
-        true
-      else
-        false
-      end
-    end
-
-    #
-    # call-seq:
-    #   combine(crc1, crc2) -> new combined crc
-    #   combine(crc1_int, crc2_int, crc2_len) -> new combined crc
-    #
-    def combine(*args)
-      case args.size
-      when 2
-        unless args[0].kind_of?(CRC) && args[1].kind_of?(CRC)
-          raise ArgumentError, "When given two arguments, both arguments are should be CRC instance"
-        end
-
-        crc1 + crc2
-      when 3
-        Aux.combine(Integer(args[0].to_i), Integer(args[1].to_i), Integer(args[2].to_i),
-                    bitsize, polynomial, initial_crc, reflect_input?, reflect_output?, xor_output)
-      else
-        raise ArgumentError, "wrong number of arguments (given #{args.size}, expect 2..3)"
-      end
-    end
-
-    def to_str
-      case
-      when bitsize > 64 then width = 20
-      when bitsize > 32 then width = 16
-      when bitsize > 16 then width =  8
-      when bitsize >  8 then width =  4
-      else                   width =  2
-      end
-
-      if reflect_input?
-        ref = " reflect-in#{reflect_output? ? "/out" : ""}"
-      else
-        ref = reflect_output? ? " reflect-out" : ""
-      end
-
-      case initial_crc
-      when 0        then init = "0"
-      when bitmask  then init = "~0"
-      when 1        then init = "1"
-      else               init = "0x%0#{width}X" % initial_crc
-      end
-
-      case xor_output
-      when 0        then xor = "0"
-      when bitmask  then xor = "~0"
-      when 1        then xor = "1"
-      else               xor = "0x%0#{width}X" % xor_output
-      end
-
-      "CRC-%d-0x%0#{width}X%s init=%s xor=%s" % [bitsize, polynomial, ref, init, xor]
-    end
-
-    def inspect
-      "#{super}{#{to_str}}"
-    end
-
-    def pretty_inspect(q)
-      q.text inspect
     end
   end
 
