@@ -3,6 +3,8 @@
 require_relative "../crc"
 
 class CRC
+  using CRC::Extentions
+
   module ModuleClass
     #
     # call-seq:
@@ -35,71 +37,16 @@ class CRC
     #     seq = seq1 + CRC::CRC32.acrc(seq1, seq2, target_crc) + seq2
     #     p CRC::CRC32[seq] # => #<CRC::CRC32:12345678>
     #
-    def acrc(crc, rest_seq = nil, target_crc = 0)
-      raise NotImplementedError, "crc polynomial is not odd" unless polynomial.odd?
-      raise NotImplementedError, "crc module is not reflect input and output" unless reflect_input? && reflect_output?
-
-      bitsize = self.bitsize
-      poly = CRC.bitreflect(polynomial, bitsize)
-      target_crc = target_crc.to_i
-      target_crc ^= xor_output
-
-      if rest_seq
-        rest_seq.bytesize.downto(1) do |i|
-          target_crc = Aux.acrc_loop_reflect(target_crc, rest_seq.getbyte(i - 1), poly, bitsize, 0xff, 8)
-        end
-      end
-
-      bytes = (bitsize + 7) / 8
-      bits = bytes * 8
-
-      case crc
-      when Numeric
-        state = bitmask & crc ^ xor_output
-      when CRC
-        raise "different crc module (given %p(%p), expect %p)" % [crc, crc.class, self] unless variant?(crc)
-        state = crc.state
-      else
-        state = new(crc).state
-      end
-
-      if bits > bitsize
-        # ビット数が 8 の境界にない場合、その隙間分を埋める。
-        # 現在の実装では、最終結果のバイト列における最終バイト値の
-        # 上位ビットが 0 であるようにしている。
-        pad = bits - bitsize
-        target_crc = Aux.acrc_loop_reflect(target_crc, 0, poly, bitsize, 0xff, pad)
-      end
-
-      target_crc = Aux.acrc_loop_reflect(target_crc, state, poly, bitsize, bitmask, bitsize)
-
-      bytes.times.reduce("") { |a, *| a << (target_crc & 0xff).chr(Encoding::BINARY); target_crc >>= 8; a }
-    end
-  end
-
-  module Aux
-    def self.acrc_loop_reflect(target_crc, state, poly, crcbits, bitmask, bits)
-      head = bits - 1
-      bitmask1 = bitmask >> 1
-      crchead = crcbits - 1
-
-      #puts "target_crc=0b%016b, state=0b%016b, reversed-polynomial=0b%016b" % [target_crc, state, poly]
-      bits.times do |i|
-        if target_crc[crchead] == 0
-          target_crc <<= 1
-        else
-          target_crc ^= poly
-          target_crc <<= 1
-          target_crc |= 0x01
-        end
-
-        target_crc ^= state[head]
-        #puts "    0_%016b ^ %d" % [target_crc, state[head]]
-        state = (state & bitmask1) << 1
-      end
-      #puts "target_crc=0b%016b" % target_crc
-
-      target_crc
+    def acrc(seq1, seq2, targetcrc = 0)
+      seq1 = seq1.convert_internal_state_for(self)
+      laststate = targetcrc.convert_target_state_for(self)
+      state = unshiftbytes(seq2, laststate)
+      bytesize = (bitsize + 7) / 8
+      seq1 <<= (bytesize * 8 - bitsize) unless reflect_input?
+      bytes = seq1.splitbytes("".b, bytesize, reflect_input?)
+      state = unshiftbytes(bytes, state)
+      state <<= (bytesize * 8 - bitsize) unless reflect_input?
+      state.splitbytes("".b, bytesize, reflect_input?)
     end
   end
 end

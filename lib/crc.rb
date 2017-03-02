@@ -433,18 +433,6 @@ class CRC
       q.text inspect
     end
 
-    def acrc(seq1, seq2, targetcrc = 0)
-      seq1 = seq1.convert_internal_state_for(self)
-      targetcrc = targetcrc.convert_target_state_for(self)
-      state = unshiftbytes(seq2, targetcrc)
-      bytesize = (bitsize + 7) / 8
-      seq1 <<= (bytesize * 8 - bitsize) unless reflect_input?
-      bytes = seq1.splitbytes([], bytesize, reflect_input?)
-      state = unshiftbytes(bytes, state)
-      state <<= (bytesize * 8 - bitsize) unless reflect_input?
-      state.splitbytes("".b, bytesize, reflect_input?)
-    end
-
     #
     # call-seq:
     #   shiftbits_by_bitbybit(bitset, state) -> state
