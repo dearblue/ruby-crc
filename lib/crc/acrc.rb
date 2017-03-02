@@ -8,7 +8,7 @@ class CRC
   module ModuleClass
     #
     # call-seq:
-    #   acrc(crc, rest_seq = nil, target_crc = 0) -> byte string as arc-code
+    #   acrc(pre, post = nil, target_crc = 0) -> byte string as arc-code
     #
     # 目的となる crc になるように、指定された crc に続くバイト列を逆算します。
     #
@@ -37,13 +37,13 @@ class CRC
     #     seq = seq1 + CRC::CRC32.acrc(seq1, seq2, target_crc) + seq2
     #     p CRC::CRC32[seq] # => #<CRC::CRC32:12345678>
     #
-    def acrc(seq1, seq2, targetcrc = 0)
-      seq1 = seq1.convert_internal_state_for(self)
+    def acrc(pre, post = nil, targetcrc = 0)
+      pre = pre.convert_internal_state_for(self)
       laststate = targetcrc.convert_target_state_for(self)
-      state = unshiftbytes(seq2, laststate)
+      state = unshiftbytes(post, laststate)
       bytesize = (bitsize + 7) / 8
-      seq1 <<= (bytesize * 8 - bitsize) unless reflect_input?
-      bytes = seq1.splitbytes("".b, bytesize, reflect_input?)
+      pre <<= (bytesize * 8 - bitsize) unless reflect_input?
+      bytes = pre.splitbytes("".b, bytesize, reflect_input?)
       state = unshiftbytes(bytes, state)
       state <<= (bytesize * 8 - bitsize) unless reflect_input?
       state.splitbytes("".b, bytesize, reflect_input?)
