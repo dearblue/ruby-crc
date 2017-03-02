@@ -99,11 +99,11 @@ class CRC
 
     refine NilClass do
       def convert_internal_state_for(crc)
-        crc.initial_crc ^ crc.xor_output
+        crc.setup(crc.initial_crc)
       end
 
       def convert_target_state_for(crc)
-        crc.xor_output
+        crc.setup(0)
       end
     end
 
@@ -115,13 +115,11 @@ class CRC
 
     refine Integer do
       def convert_internal_state_for(crc)
-        crc.bitmask & self
+        crc.setup(self)
       end
 
       def convert_target_state_for(crc)
-        s = crc.bitmask & self ^ crc.xor_output
-        s = CRC.bitreflect(s, crc.bitsize) if crc.reflect_input?
-        s
+        crc.setup(self)
       end
     end
 
@@ -328,15 +326,16 @@ class CRC
   module ModuleClass
     def setup(crc = nil)
       crc ||= initial_crc
+      crc ^= xor_output
       crc = CRC.bitreflect(crc, bitsize) if reflect_input? ^ reflect_output?
-      crc ^ xor_output
+      crc & bitmask
     end
 
     alias init setup
 
     def finish(state)
       state = CRC.bitreflect(state, bitsize) if reflect_input? ^ reflect_output?
-      state ^ xor_output
+      state ^ xor_output & bitmask
     end
 
     def crc(seq, crc = nil)
