@@ -2,10 +2,16 @@ class CRC
   module Extensions
     refine Integer do
       def to_magicdigest_for(m, bytesize = m.bitsize.bitsize_to_bytesize)
-        if m.reflect_output?
-          magic = splitbytes("".b, bytesize, true)
+        if m.reflect_input? ^ m.reflect_output?
+          tmp = CRC.bitreflect(self, m.bitsize)
         else
-          tmp = self << ((bytesize * 8) - m.bitsize)
+          tmp = self
+        end
+
+        if m.reflect_input?
+          magic = tmp.splitbytes("".b, bytesize, true)
+        else
+          tmp <<= ((bytesize * 8) - m.bitsize)
           magic = tmp.splitbytes("".b, bytesize, false)
         end
       end
