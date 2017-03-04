@@ -79,24 +79,7 @@ class CRC
     end
 
     def variant?(obj)
-      case
-      when obj.kind_of?(CRC)
-        mod = obj.class
-      when obj.kind_of?(Class) && obj < CRC
-        mod = obj
-      else
-        return false
-      end
-
-      if bitsize == mod.bitsize &&
-         polynomial == mod.polynomial &&
-         reflect_input? == mod.reflect_input? &&
-         reflect_output? == mod.reflect_output? &&
-         xor_output == mod.xor_output
-        true
-      else
-        false
-      end
+      obj.variant_for?(self)
     end
 
     #
@@ -197,15 +180,10 @@ class CRC
   end
 
   def +(crc2)
-    raise ArgumentError, "not a CRC instance (#{crc2.inspect})" unless crc2.kind_of?(CRC)
-    m1 = self.class
-    m2 = crc2.class
-    unless m1.bitsize == m2.bitsize &&
-           m1.polynomial == m2.polynomial &&
-           m1.reflect_input? == m2.reflect_input? &&
-           m1.reflect_output? == m2.reflect_output? &&
-           # m1.initial_crc == m2.initial_crc &&
-           m1.xor_output == m2.xor_output
+    m1 = get_crc_module
+    m2 = crc2.get_crc_module
+    raise ArgumentError, "not a CRC instance (#{crc2.inspect})" unless m2
+    unless m2.variant_for?(m1)
       raise ArgumentError, "different CRC module (#{m1.inspect} and #{m2.inspect})"
     end
     m1.new(m1.combine(crc, crc2.crc, crc2.size), size + crc2.size)
@@ -214,15 +192,7 @@ class CRC
   def ==(a)
     case a
     when CRC
-      m1 = self.class
-      m2 = a.class
-      if m1.bitsize == m2.bitsize &&
-         m1.polynomial == m2.polynomial &&
-         m1.reflect_input? == m2.reflect_input? &&
-         m1.reflect_output? == m2.reflect_output? &&
-         # m1.initial_crc == m2.initial_crc &&
-         m1.xor_output == m2.xor_output &&
-         state == a.state
+      if variant_for?(a) && state == a.state
         true
       else
         false
