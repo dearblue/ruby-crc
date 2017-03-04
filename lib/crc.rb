@@ -322,6 +322,7 @@ class CRC
   require_relative "crc/_combine"
   require_relative "crc/_shift"
   require_relative "crc/_magic"
+  require_relative "crc/_file"
 
   #
   # Create CRC module classes.
