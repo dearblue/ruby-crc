@@ -27,7 +27,7 @@ forceoverwrite = false
 verbose = 1
 
 OptionParser.new("usage: #{File.basename $0} [options] output-filename...", 12, " ").instance_eval do
-  on("-M crcname", "choose included crc name in library (``-l'' to print list)") do |x|
+  on("-m crcname", "choose included crc name in library (``-l'' to print list)") do |x|
     begin
       crc = CRC.lookup(x)
     rescue
@@ -35,7 +35,7 @@ OptionParser.new("usage: #{File.basename $0} [options] output-filename...", 12, 
             "not matched crc name - #{x.strip} (if check name, use ``-l'' switch)"
     end
   end
-  on("-N crcname", "declare function name or class name [DEFAULT is filename]") { |x| crcname = x.strip }
+  on("-n crcname", "declare function name or class name [DEFAULT is filename]") { |x| crcname = x.strip }
   on("-s bitsize", "declare crc bit size [REQUIRED for customized crc]") do |x|
     bitsize = x.to_i
     unless bitsize >= 1 && bitsize <= 64
@@ -116,13 +116,13 @@ examples:
     $ rbcrc crc30cdma.js
 
   * create crc-32 generator to ``crc.c'', ``crc.rb'' and ``crc.js''
-    $ rbcrc -Mcrc32 crc.c crc.rb crc.js
+    $ rbcrc -mcrc32 crc.c crc.rb crc.js
 
   * create customized crc generator (as mycrc function) to ``mycrc.c''
     $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
   * create customized crc generator (as MyCRC class) to ``mycrc_1.rb''
-    $ rbcrc -s39 -p0x987654321 -IO -x1 -NMyCRC mycrc_1.rb
+    $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
   EOS
 
   begin

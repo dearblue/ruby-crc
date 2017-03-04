@@ -148,8 +148,8 @@ standard-table, slicing-by-4, slicing-by-8, and slicing-by-16.
 ```
 $ rbcrc --help
 usage: rbcrc [options] output-filename...
- -M crcname   choose included crc name in library (``-l'' to print list)
- -N crcname   declare function name or class name [DEFAULT is filename]
+ -m crcname   choose included crc name in library (``-l'' to print list)
+ -n crcname   declare function name or class name [DEFAULT is filename]
  -s bitsize   declare crc bit size [REQUIRED for customized crc]
  -p polynom   declare crc polynomial [REQUIRED for customized crc]
  -c initcrc   declare initial crc (not internal state) [DEFAULT: 0]
@@ -192,13 +192,13 @@ examples:
     $ rbcrc crc30cdma.js
 
   * create crc-32 generator to ``crc.c'', ``crc.rb'' and ``crc.js''
-    $ rbcrc -Mcrc32 crc.c crc.rb crc.js
+    $ rbcrc -mcrc32 crc.c crc.rb crc.js
 
   * create customized crc generator (as mycrc function) to ``mycrc.c''
     $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
   * create customized crc generator (as MyCRC class) to ``mycrc_1.rb''
-    $ rbcrc -s39 -p0x987654321 -IO -x1 -NMyCRC mycrc_1.rb
+    $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
 ```
 
 
