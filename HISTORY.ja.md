@@ -2,6 +2,27 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
+## crc-0.4 (TRYOUT)
+
+  * 任意の CRC 値から逆算してバイト列を生成する機能 CRC.acrc (crc/acrc.rb) を正式に追加
+      * crc-0.3 で実験的に追加された同機能を、正式なものとしました。
+
+        この機能は入出力の正順・逆順に関わらずに利用可能です。
+
+  * ``CRC.shiftbits`` ``CRC.shiftbytes`` ``CRC.unshiftbits`` ``CRC.unshiftbytes`` を追加
+
+      * 任意長のビット列を与えて内部状態を更新する ``CRC.shiftbits`` を追加しました。
+
+      * 任意長の8ビット列を与えて内部状態を更新する ``CRC.shiftbytes`` を追加しました。
+          * ``CRC.update`` とは異なり、整数値で構成される配列を渡すことが出来ます。
+
+      * 任意長のビット列を与えて内部状態を差し戻す ``CRC.unshiftbits`` を追加しました。
+
+      * 任意長の8ビット列を与えて内部状態を差し戻す ``CRC.unshiftbytes`` を追加しました。
+
+  * **[BUG FIX]** 入出力のビット送り方向が異なる場合、CRC.reset が不正な初期化を行っていた問題を修正
+
+
 ## crc-0.3.1.1 (平成28年11月10日 木曜日)
 
   * rbcrc において reflect-input/output が既定値となっていなかったため修正
