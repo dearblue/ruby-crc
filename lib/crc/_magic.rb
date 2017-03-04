@@ -20,7 +20,7 @@ class CRC
         when bytes * 2
           crc = hex
         else
-          raise "wrong byte size (expect #{bytes} or #{bytes * 2} bytes, but given #{inspect})", caller
+          raise TypeError, "wrong byte size (expect #{bytes} or #{bytes * 2} bytes, but given #{inspect})", caller
         end
 
         crc.to_magicdigest_for(m, bytes)
