@@ -201,6 +201,28 @@ examples:
     $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
 ```
 
+- - - -
+
+And, this command has feature too that is print for each CRC specifications as YAML format.
+
+``` text
+$ rbcrc -lvv
+...snip...
+"CRC-32":
+  bitsize:        32
+  polynomial:     0x04C11DB7
+  reflect input:  true
+  reflect output: true
+  initial crc:    0x00000000
+  xor output:     0xFFFFFFFF
+  magic number:   0x2144DF1C
+  another names:
+  - "CRC-32-ADCCP"
+  - "CRC-32-PKZIP"
+  - "PKZIP"
+...snip...
+```
+
 
 ## arc-crc
 
