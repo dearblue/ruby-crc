@@ -40,7 +40,7 @@ class CRC
 
     refine CRC.singleton_class do
       def __cached_magic_code__
-        @__cached_magic_code__ = crc("").to_magicdigest_for(self).freeze
+        @__cached_magic_code__ = initial_crc.to_magicdigest_for(self).freeze
         singleton_class.class_eval { attr_reader :__cached_magic_code__ }
         @__cached_magic_code__
       end
