@@ -501,17 +501,11 @@ class CRC
       bitset = Array(bitset)
 
       if reflect_input?
-        poly = CRC.bitreflect(polynomial, bitsize)
-        head = bitsize - 1
+        poly = (CRC.bitreflect(polynomial, bitsize) << 1) | 1
+        head = bitsize
         bitset.reverse_each do |b|
-          if state[head] == 0
-            state <<= 1
-          else
-            state ^= poly
-            state <<= 1
-            state |= 0x01
-          end
-
+          state <<= 1
+          state ^= poly unless state[head] == 0
           state ^= 1 & b
         end
 
@@ -520,15 +514,11 @@ class CRC
         Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
           headbit = 1 << head
           lowoff = (head + 1) - bitsize
+          poly = (poly >> 1) | headbit
           bitset.reverse_each do |b|
-            if s[lowoff] == 0
-              s >>= 1
-            else
-              s ^= poly
-              s >>= 1
-              s |= headbit
-            end
-
+            tmp = s[lowoff]
+            s >>= 1
+            s ^= poly unless tmp == 0
             s ^= (1 & b) << head
           end
 
@@ -545,19 +535,13 @@ class CRC
     #
     def unshiftbytes_by_bitbybit(byteset, state)
       if reflect_input?
-        poly = CRC.bitreflect(polynomial, bitsize)
-        head = bitsize - 1
+        poly = (CRC.bitreflect(polynomial, bitsize) << 1) | 1
+        head = bitsize
         byteset.reverse_each_byte do |b|
-          8.times do |i|
-            if state[head] == 0
-              state <<= 1
-            else
-              state ^= poly
-              state <<= 1
-              state |= 0x01
-            end
-
-            state ^= 1 & b[7 - i]
+          7.downto(0) do |i|
+            state <<= 1
+            state ^= poly unless state[head] == 0
+            state ^= b[i]
           end
         end
 
@@ -566,17 +550,13 @@ class CRC
         Aux.slide_to_head(bitsize, state, polynomial, bitmask) do |s, poly, csh, head, carries|
           headbit = 1 << head
           lowoff = (head + 1) - bitsize
+          poly = (poly >> 1) | headbit
           byteset.reverse_each_byte do |b|
             8.times do |i|
-              if s[lowoff] == 0
-                s >>= 1
-              else
-                s ^= poly
-                s >>= 1
-                s |= headbit
-              end
-
-              s ^= (1 & b[i]) << head
+              tmp = s[lowoff]
+              s >>= 1
+              s ^= poly unless tmp == 0
+              s ^= b[i] << head
             end
           end
 
@@ -590,26 +570,18 @@ class CRC
         if bitsize < 8
           pad = 8 - bitsize
           shift = 0
-          lowestbit = 1 << pad
         else
           pad = 0
           shift = bitsize - 8
-          lowestbit = 1
         end
-        poly = CRC.bitreflect(polynomial, bitsize) << pad
-        head = bitsize - 1 + pad
+        poly = ((CRC.bitreflect(polynomial, bitsize) << 1) | 1) << pad
+        head = bitsize + pad
         @unshift_table = 256.times.map do |ch|
           state = ch << shift
           8.times do |i|
-            if state[head] == 0
-              state <<= 1
-            else
-              state ^= poly
-              state <<= 1
-              state ^= lowestbit
-            end
+            state <<= 1
+            state ^= poly unless state[head] == 0
           end
-
           state >> pad
         end
       else
