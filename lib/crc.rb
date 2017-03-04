@@ -149,15 +149,11 @@ class CRC
   #
   # call-seq:
   #   initialize(initial_crc = nil, size = 0)
-  #   initialize(seq, initial_crc = nil, size = 0)
   #
-  def initialize(*args)
-    initialize_args(args) do |seq, initial_crc, size|
-      m = get_crc_module
-      @state = m.setup((initial_crc || m.initial_crc).to_i)
-      @size = size.to_i
-      update(seq) if seq
-    end
+  def initialize(initial_crc = nil, size = 0)
+    m = get_crc_module
+    @state = m.setup((initial_crc || m.initial_crc).to_i)
+    @size = size.to_i
   end
 
   def reset(initial_crc = nil, size = 0)
@@ -238,30 +234,6 @@ class CRC
 
   def pretty_inspect(q)
     q.text inspect
-  end
-
-  private
-  def initialize_args(args)
-    case args.size
-    when 0
-      yield nil, nil, 0
-    when 1
-      if args[0].kind_of?(String)
-        yield args[0], nil, 0
-      else
-        yield nil, args[0], 0
-      end
-    when 2
-      if args[0].kind_of?(String)
-        yield args[0], args[1], 0
-      else
-        yield nil, args[0], args[1].to_i
-      end
-    when 3
-      yield args[0], args[1], args[2].to_i
-    else
-      raise ArgumentError, "wrong argument size (given #{args.size}, expect 0..3)"
-    end
   end
 
   MODULE_TABLE = {}
