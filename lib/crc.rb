@@ -5,9 +5,10 @@ if ENV["RUBY_CRC_NOFAST"].to_i > 0
   CRC::IMPLEMENT = :ruby
 else
   begin
+    gem "crc-turbo", ">= 0.3", "< 0.5"
     require File.join("crc", RUBY_VERSION[/\d+\.\d+/], "_turbo.so")
     CRC::IMPLEMENT = :turbo
-  rescue LoadError
+  rescue LoadError, Gem::MissingSpecVersionError
     require_relative "crc/_byruby"
     CRC::IMPLEMENT = :ruby
   end
