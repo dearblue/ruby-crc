@@ -119,10 +119,10 @@ examples:
     $ rbcrc -Mcrc32 crc.c crc.rb crc.js
 
   * create customized crc generator (as mycrc function) to ``mycrc.c''
-    $ rbcrc -s15 -p0x6789 -io -r0 -x~0 mycrc.c
+    $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
   * create customized crc generator (as MyCRC class) to ``mycrc_1.rb''
-    $ rbcrc -s39 -p0x987654321 -IO -r0 -x1 -NMyCRC mycrc_1.rb
+    $ rbcrc -s39 -p0x987654321 -IO -x1 -NMyCRC mycrc_1.rb
   EOS
 
   begin
