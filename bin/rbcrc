@@ -183,7 +183,9 @@ begin
   case mode
   when :list
     case verbose
-    when 0, 1
+    when 0
+      puts CRC::LIST.map {|e| e[7] }.join(", ")
+    when 1
       puts CRC::LIST.map {|e| e[7 .. -1] }.join(", ")
     when 2
       puts CRC::LIST.map {|e| e[7 .. -1].join(", ") }.join("\n")
