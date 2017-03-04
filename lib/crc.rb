@@ -49,7 +49,7 @@ class CRC
   require_relative "crc/_utils"
   require_relative "crc/_aux"
 
-  using Extentions
+  using Extensions
 
   module ModuleClass
     def setup(crc = nil)

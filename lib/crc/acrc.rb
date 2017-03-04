@@ -3,7 +3,7 @@
 require_relative "../crc"
 
 class CRC
-  using CRC::Extentions
+  using CRC::Extensions
 
   module ModuleClass
     #

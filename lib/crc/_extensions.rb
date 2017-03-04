@@ -1,5 +1,5 @@
 class CRC
-  module Extentions
+  module Extensions
     # refinements
     # * each_byte
     # * reverse_each_byte
