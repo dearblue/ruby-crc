@@ -52,6 +52,12 @@ class CRC
   using Extensions
 
   module Calcurator
+    def [](seq, *args)
+      c = new(*args)
+      c.update(seq) if seq
+      c
+    end
+
     def setup(crc = nil)
       crc ||= initial_crc
       crc ^= xor_output
