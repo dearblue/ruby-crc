@@ -16,6 +16,10 @@ This document is written in Japanese.
 
       * ``CRC.[](seq, ...)`` の seq は必須としました。
 
+  * **[互換性を損なう変更]** bin/rbcrc のオプション名を変更
+
+      * ``-M`` および ``-N`` オプションをそれぞれ小文字に変更しました。
+
   * ``CRC.file`` 及び ``CRC#file`` メソッドの追加
 
       * ファイルパスを与えると CRC を計算してインスタンスを返す ``CRC.file`` 及び ``CRC#file`` を追加しました。
