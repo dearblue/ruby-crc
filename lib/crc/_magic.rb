@@ -14,11 +14,16 @@ class CRC
     refine String do
       def to_magicdigest_for(m)
         bytes = m.bitsize.bitsize_to_bytesize
-        unless bytes == bytesize
-          raise "wrong byte size (expect #{bytes} bytes, but given #{inspect})", caller
+        case bytesize
+        when bytes
+          crc = unpack("C*").reduce { |a, ch| (a << 8) | ch }
+        when bytes * 2
+          crc = hex
+        else
+          raise "wrong byte size (expect #{bytes} or #{bytes * 2} bytes, but given #{inspect})", caller
         end
 
-        unpack("C*").reduce { |a, ch| (a << 8) | ch }.to_magicdigest_for(m, bytes)
+        crc.to_magicdigest_for(m, bytes)
       end
     end
 
@@ -69,7 +74,7 @@ class CRC
     #
     # crc 値を与えると magicdigest へと変換したバイナリデータを返します。
     #
-    # crc には整数値、hexdigest ではない digest データ、変種を含む CRC インスタンスを渡すことが出来ます。
+    # crc には整数値、digest/hexdigest データ、変種を含む CRC インスタンスを渡すことが出来ます。
     #
     def to_magicdigest(crc)
       crc.to_magicdigest_for(self)
