@@ -156,5 +156,50 @@ class CRC
         (bitsize_to_intsize * 8) - bitsize
       end
     end
+
+    # refinements:
+    # * get_crc_module
+    # * variant_for?
+    ;
+
+    refine BasicObject do
+      def get_crc_module
+        nil
+      end
+
+      def variant_for?(m)
+        false
+      end
+    end
+
+    refine CRC do
+      def get_crc_module
+        self.class
+      end
+
+      def variant_for?(m)
+        get_crc_module.variant_for?(m)
+      end
+    end
+
+    refine CRC.singleton_class do
+      def get_crc_module
+        self
+      end
+
+      def variant_for?(m)
+        return false unless m = m.get_crc_module
+
+        if bitsize == m.bitsize &&
+           polynomial == m.polynomial &&
+           reflect_input? == m.reflect_input? &&
+           reflect_output? == m.reflect_output? &&
+           xor_output == m.xor_output
+          true
+        else
+          false
+        end
+      end
+    end
   end
 end
