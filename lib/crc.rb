@@ -153,7 +153,7 @@ class CRC
   #
   def initialize(*args)
     initialize_args(args) do |seq, initial_crc, size|
-      m = self.class
+      m = get_crc_module
       @state = m.setup((initial_crc || m.initial_crc).to_i)
       @size = size.to_i
       update(seq) if seq
@@ -161,14 +161,14 @@ class CRC
   end
 
   def reset(initial_crc = nil, size = 0)
-    m = self.class
+    m = get_crc_module
     @state = m.setup((initial_crc || m.initial_crc).to_i)
     @size = size.to_i
     self
   end
 
   def update(seq)
-    @state = self.class.update(seq, state)
+    @state = get_crc_module.update(seq, state)
     @size += seq.bytesize
     self
   end
@@ -176,7 +176,7 @@ class CRC
   alias << update
 
   def crc
-    self.class.finish(state)
+    get_crc_module.finish(state)
   end
 
   def +(crc2)
@@ -212,28 +212,28 @@ class CRC
   end
 
   def digest
-    Aux.digest(crc, self.class.bitsize)
+    Aux.digest(crc, get_crc_module.bitsize)
   end
 
   # return digest as internal state
   def digest!
-    Aux.digest(state, self.class.bitsize)
+    Aux.digest(state, get_crc_module.bitsize)
   end
 
   def hexdigest
-    Aux.hexdigest(crc, self.class.bitsize)
+    Aux.hexdigest(crc, get_crc_module.bitsize)
   end
 
   # return hex-digest as internal state
   def hexdigest!
-    Aux.hexdigest(state, self.class.bitsize)
+    Aux.hexdigest(state, get_crc_module.bitsize)
   end
 
   alias to_str hexdigest
   alias to_s hexdigest
 
   def inspect
-    "\#<#{self.class}:#{hexdigest}>"
+    "\#<#{get_crc_module}:#{hexdigest}>"
   end
 
   def pretty_inspect(q)

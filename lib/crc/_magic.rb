@@ -29,8 +29,8 @@ class CRC
 
     refine CRC do
       def to_magicdigest_for(m)
-        unless m.variant?(self.class)
-          raise TypeError, "different crc type - #{self.class.inspect} (expect #{m.inspect})", caller
+        unless m.variant?(get_crc_module)
+          raise TypeError, "different crc type - #{get_crc_module.inspect} (expect #{m.inspect})", caller
         end
 
         magicdigest
@@ -39,7 +39,7 @@ class CRC
 
     refine BasicObject do
       def to_magicdigest_for(m)
-        raise TypeError, "cant convert type - #{self.class}", caller
+        raise TypeError, "cant convert type - #{get_crc_module}", caller
       end
     end
 
@@ -82,6 +82,6 @@ class CRC
   end
 
   def magicdigest
-    crc.to_magicdigest_for(self.class)
+    crc.to_magicdigest_for(get_crc_module)
   end
 end
