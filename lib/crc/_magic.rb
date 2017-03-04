@@ -60,7 +60,7 @@ class CRC
 
   using CRC::Extensions
 
-  module ModuleClass
+  module Calcurator
     def magicnumber
       @magicnumber = crc(__cached_magic_code__)
       singleton_class.class_eval { attr_reader :magicnumber }

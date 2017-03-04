@@ -1,5 +1,5 @@
 class CRC
-  module ModuleClass
+  module Calcurator
     #
     # call-seq:
     #   shiftbits_by_bitbybit(bitset, state) -> state

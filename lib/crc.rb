@@ -51,7 +51,7 @@ class CRC
 
   using Extensions
 
-  module ModuleClass
+  module Calcurator
     def setup(crc = nil)
       crc ||= initial_crc
       crc ^= xor_output

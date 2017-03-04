@@ -61,7 +61,7 @@ class CRC
           alias_method :[], :new
         end
 
-        extend CRC::ModuleClass
+        extend CRC::Calcurator
       end
     end
 
@@ -259,7 +259,7 @@ class CRC
     end
   end
 
-  module ModuleClass
+  module Calcurator
     attr_reader :bitsize, :bitmask, :polynomial, :initial_crc,
                 :reflect_input, :reflect_output, :xor_output, :name
 
