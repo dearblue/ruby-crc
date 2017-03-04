@@ -212,7 +212,8 @@ begin
   reflect input:  #{e[2].inspect}
   reflect output: #{e[3].inspect}
   initial crc:    #{hex[e[4]]}
-  xor output:     #{hex[e[5]]}#{names}
+  xor output:     #{hex[e[5]]}
+  magic number:   #{hex[CRC[e[7]].magicnumber]}#{names}
         YAML_FORMAT
       end
     end
