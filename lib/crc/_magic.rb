@@ -1,17 +1,13 @@
 class CRC
   module Extensions
     refine Integer do
-      def to_magicdigest(bitsize, reflect, bytesize = bitsize.bitsize_to_bytesize)
-        if reflect
+      def to_magicdigest_for(m, bytesize = m.bitsize.bitsize_to_bytesize)
+        if m.reflect_output?
           magic = splitbytes("".b, bytesize, true)
         else
-          tmp = self << ((bytesize * 8) - bitsize)
+          tmp = self << ((bytesize * 8) - m.bitsize)
           magic = tmp.splitbytes("".b, bytesize, false)
         end
-      end
-
-      def to_magicdigest_for(m)
-        to_magicdigest(m.bitsize, m.reflect_output?)
       end
     end
 
@@ -22,7 +18,7 @@ class CRC
           raise "wrong byte size (expect #{bytes} bytes, but given #{inspect})", caller
         end
 
-        unpack("C*").reduce { |a, ch| (a << 8) | ch }.to_magicdigest(m.bitsize, m.reflect_output?, bytes)
+        unpack("C*").reduce { |a, ch| (a << 8) | ch }.to_magicdigest_for(m, bytes)
       end
     end
 
@@ -44,7 +40,7 @@ class CRC
 
     refine CRC.singleton_class do
       def __cached_magic_code__
-        @__cached_magic_code__ = crc("").to_magicdigest(bitsize, reflect_output?).freeze
+        @__cached_magic_code__ = crc("").to_magicdigest_for(self).freeze
         singleton_class.class_eval { attr_reader :__cached_magic_code__ }
         @__cached_magic_code__
       end
@@ -67,7 +63,7 @@ class CRC
     end
 
     def magicdigest(seq, crc = nil)
-      crc(seq, crc).to_magicdigest(bitsize, reflect_output?)
+      crc(seq, crc).to_magicdigest_for(self)
     end
 
     #
@@ -81,7 +77,6 @@ class CRC
   end
 
   def magicdigest
-    m = self.class
-    crc.to_magicdigest(m.bitsize, m.reflect_output?)
+    crc.to_magicdigest_for(self.class)
   end
 end
