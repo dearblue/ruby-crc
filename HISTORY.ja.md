@@ -4,7 +4,18 @@ This document is written in Japanese.
 
 ## crc-0.4 (TRYOUT)
 
+  * ``CRC.file`` 及び ``CRC#file`` メソッドの追加
+
+      * ファイルパスを与えると CRC を計算してインスタンスを返す ``CRC.file`` 及び ``CRC#file`` を追加しました。
+
+  * ``CRC.magic``、``CRC.magicnumber``、``CRC.magicdigest``、``CRC#magicdigest`` メソッドの追加
+
+      * マジックナンバーを取得・計算するためのメソッドを追加しました。
+
+        これらは CRC-32 の場合であれば RFC1570 で出てくるマジックナンバー 0xdebb20e3 のことです。
+
   * 任意の CRC 値から逆算してバイト列を生成する機能 CRC.acrc (crc/acrc.rb) を正式に追加
+
       * crc-0.3 で実験的に追加された同機能を、正式なものとしました。
 
         この機能は入出力の正順・逆順に関わらずに利用可能です。
