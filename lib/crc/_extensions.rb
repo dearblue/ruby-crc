@@ -123,5 +123,38 @@ class CRC
         self << (0xff & ch)
       end
     end
+
+    # refinements:
+    # * bitsize_to_bytesize
+    # * bitsize_to_intsize
+    # * byte_paddingsize
+    # * int_paddingsize
+    ;
+
+    refine Integer do
+      def bitsize_to_bytesize
+        (self + 7) / 8
+      end
+
+      def bitsize_to_intsize
+        bitsize = 8
+        intsize = 1
+        10.times do
+          return intsize if self <= bitsize
+          bitsize <<= 1
+          intsize <<= 1
+        end
+
+        raise "数値が巨大すぎるため、intsize が決定できません - #{inspect}"
+      end
+
+      def byte_paddingsize
+        (bitsize_to_bytesize * 8) - bitsize
+      end
+
+      def int_paddingsize
+        (bitsize_to_intsize * 8) - bitsize
+      end
+    end
   end
 end
