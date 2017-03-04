@@ -8,7 +8,7 @@ This document is written in Japanese.
 
       * ファイルパスを与えると CRC を計算してインスタンスを返す ``CRC.file`` 及び ``CRC#file`` を追加しました。
 
-  * ``CRC.magic``、``CRC.magicnumber``、``CRC.magicdigest``、``CRC#magicdigest`` メソッドの追加
+  * ``CRC.magic``、``CRC.magicnumber``、``CRC.magicdigest``、``CRC.to_magicdigest``、``CRC#magicdigest`` メソッドの追加
 
       * マジックナンバーを取得・計算するためのメソッドを追加しました。
 

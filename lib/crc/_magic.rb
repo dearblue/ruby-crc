@@ -70,6 +70,11 @@ class CRC
       crc(seq, crc).to_magicdigest(bitsize, reflect_output?)
     end
 
+    #
+    # crc 値を与えると magicdigest へと変換したバイナリデータを返します。
+    #
+    # crc には整数値、hexdigest ではない digest データ、変種を含む CRC インスタンスを渡すことが出来ます。
+    #
     def to_magicdigest(crc)
       crc.to_magicdigest_for(self)
     end
