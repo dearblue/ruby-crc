@@ -173,9 +173,7 @@ class CRC
     end
 
     refine CRC do
-      def get_crc_module
-        self.class
-      end
+      alias get_crc_module class
 
       def variant_for?(m)
         get_crc_module.variant_for?(m)
@@ -183,9 +181,7 @@ class CRC
     end
 
     refine CRC.singleton_class do
-      def get_crc_module
-        self
-      end
+      alias get_crc_module itself
 
       def variant_for?(m)
         return false unless m = m.get_crc_module
