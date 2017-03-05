@@ -15,10 +15,10 @@ Pure ruby implemented general CRC (Cyclic Redundancy Check) generator.
 Customization is posible for 1 to 64 bit width, any polynomials, and with/without bit reflection input/output.
 If you need more speed, please use crc-turbo.
 EOS
-  s.homepage = "https://osdn.jp/projects/rutsubo/"
+  s.homepage = "https://github.com/dearblue/ruby-crc-turbo"
   s.licenses = ["BSD-2-Clause", "Zlib", "CC0-1.0"]
   s.author = "dearblue"
-  s.email = "dearblue@users.osdn.me"
+  s.email = "dearblue@users.noreply.github.com"
 
   s.required_ruby_version = ">= 2.2"
   s.add_development_dependency "rake"
