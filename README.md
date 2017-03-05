@@ -44,11 +44,9 @@ This examples are used CRC-32 module. Please see CRC for more details.
   * ``CRC.crc32.digest(seq, init = CRC::CRC32.initial_crc) => crc-32 digest`` (likely as ``Digest::XXXX.digest``)
   * ``CRC.crc32.hexdigest(seq, init = 0) -> crc-32 hex-digest`` (likely as ``Digest::XXXX.hexdigest``)
   * ``CRC.crc32[seq, init = 0, current_length = 0] -> crc-32 generator``
-  * ``CRC.crc32.new(seq, init = 0, current_length = 0) -> crc-32 generator``
 
 ### Calcurate by streaming
 
-  * ``CRC.crc32[init = 0, current_length = 0] => crc-32 generator``
   * ``CRC.crc32.new(init = 0, current_length = 0) => crc-32 generator``
   * ``CRC::CRC32#update(seq) => self`` (likely as ``Digest::XXXX.update``)
   * ``CRC::CRC32#finish => crc-32 integer`` (likely as ``Digest::XXXX.finish``)
@@ -94,7 +92,7 @@ Example ::
 MyCRC32 = CRC.new(32, 0x04C11DB7)
 MyCRC32.class                     # => Class
 MyCRC32.hexdigest("123456789")    # => "CBF43926"
-MyCRC32.new("123456789")          # => #<MyCRC32:CBF43926>
+MyCRC32["123456789"]              # => #<MyCRC32:CBF43926>
 ```
 
 ### Calcurate arc-crc
