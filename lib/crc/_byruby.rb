@@ -9,7 +9,7 @@
 #
 # \* \* \* \* \* \* \* \*
 #
-# Pure ruby implemented general CRC generator.
+# Pure ruby implemented general CRC calcurator.
 # It's used slice-by-16 algorithm with byte-order free.
 # This is based on the Intel's slice-by-eight algorithm.
 #
@@ -28,7 +28,7 @@ class CRC
     #
     # call-seq:
     #   new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil) -> new crc module class (CRC based class)
-    #   new(initial_crc = nil, size = 0) -> new crc generator (CRC instance)
+    #   new(initial_crc = nil, size = 0) -> new crc calcurator (CRC instance)
     #
     def new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil)
       bitsize = bitsize.to_i

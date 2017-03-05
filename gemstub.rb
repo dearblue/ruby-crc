@@ -9,9 +9,9 @@ ver = $1
 GEMSTUB = Gem::Specification.new do |s|
   s.name = "crc"
   s.version = ver
-  s.summary = "general CRC generator"
+  s.summary = "general CRC calcurator"
   s.description = <<EOS
-Pure ruby implemented general CRC (Cyclic Redundancy Check) generator.
+Pure ruby implemented general CRC (Cyclic Redundancy Check) calcurator.
 Customization is posible for 1 to 64 bit width, any polynomials, and with/without bit reflection input/output.
 If you need more speed, please use crc-turbo.
 EOS

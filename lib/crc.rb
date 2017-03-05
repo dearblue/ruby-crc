@@ -17,15 +17,15 @@ end
 require_relative "crc/version"
 
 #
-# This is a general CRC generator.
+# This is a general CRC calcurator.
 #
 # When you want to use CRC-32 module, there are following ways:
 #
-# 1. Generate CRC-32'd value at direct:
+# 1. Calcurate CRC-32'd value at direct:
 #
 #     CRC.crc32("123456789") # => 3421780262
 #
-# 2. Generate CRC-32'd hex-digest at direct:
+# 2. Calcurate CRC-32'd hex-digest at direct:
 #
 #     CRC::CRC32.hexdigest("123456789") # => "CBF43926"
 #

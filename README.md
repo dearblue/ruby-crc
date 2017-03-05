@@ -1,7 +1,7 @@
 
-# crc - CRC generator for ruby
+# crc - CRC calcurator for ruby
 
-This is a general CRC (Cyclic Redundancy Check) generator for ruby.
+This is a general CRC (Cyclic Redundancy Check) calcurator for ruby.
 
 It is written by pure ruby with based on slice-by-eight algorithm (slice-by-16 algorithm with byte-order free).
 
@@ -43,11 +43,11 @@ This examples are used CRC-32 module. Please see CRC for more details.
   * ``CRC.crc32.crc(seq, init = CRC::CRC32.initial_crc) => crc-32 integer`` (likely as ``Zlib.crc32``)
   * ``CRC.crc32.digest(seq, init = CRC::CRC32.initial_crc) => crc-32 digest`` (likely as ``Digest::XXXX.digest``)
   * ``CRC.crc32.hexdigest(seq, init = 0) -> crc-32 hex-digest`` (likely as ``Digest::XXXX.hexdigest``)
-  * ``CRC.crc32[seq, init = 0, current_length = 0] -> crc-32 generator``
+  * ``CRC.crc32[seq, init = 0, current_length = 0] -> crc-32 calcurator``
 
 ### Calcurate by streaming
 
-  * ``CRC.crc32.new(init = 0, current_length = 0) => crc-32 generator``
+  * ``CRC.crc32.new(init = 0, current_length = 0) => crc-32 calcurator``
   * ``CRC::CRC32#update(seq) => self`` (likely as ``Digest::XXXX.update``)
   * ``CRC::CRC32#finish => crc-32 integer`` (likely as ``Digest::XXXX.finish``)
   * ``CRC::CRC32#crc => crc-32 integer`` (same as ``CRC::CRC32#finish``)
@@ -68,7 +68,7 @@ x.hexdigest           # => "CBF43926"
 ### Combine
 
   * ``CRC.combine(crc1, crc2, len2) => combined crc integer`` (likely as ``Zlib.crc32_comibne``)
-  * ``CRC#+(right_crc) => combined crc generator``
+  * ``CRC#+(right_crc) => combined crc calcurator``
 
 Example-1 ::
 
@@ -180,22 +180,22 @@ Support export file types:
                  (executable for mruby and limitation bitsize by fixnum)
 
 examples:
-  * create crc-32 generator to c source (and header file)
+  * create crc-32 calcurator to c source (and header file)
     $ rbcrc crc32.c
 
-  * create crc-32c generator to ruby source
+  * create crc-32c calcurator to ruby source
     $ rbcrc crc32c.rb
 
-  * create crc-30-cdma generator to javascript source
+  * create crc-30-cdma calcurator to javascript source
     $ rbcrc crc30cdma.js
 
-  * create crc-32 generator to ``crc.c'', ``crc.rb'' and ``crc.js''
+  * create crc-32 calcurator to ``crc.c'', ``crc.rb'' and ``crc.js''
     $ rbcrc -mcrc32 crc.c crc.rb crc.js
 
-  * create customized crc generator (as mycrc function) to ``mycrc.c''
+  * create customized crc calcurator (as mycrc function) to ``mycrc.c''
     $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
-  * create customized crc generator (as MyCRC class) to ``mycrc_1.rb''
+  * create customized crc calcurator (as MyCRC class) to ``mycrc_1.rb''
     $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
 ```
 
