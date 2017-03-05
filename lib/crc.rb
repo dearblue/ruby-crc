@@ -285,7 +285,7 @@ class CRC
     names.each do |nm|
       nm1 = nm.downcase.gsub(/[\W_]+/, "")
       if MODULE_TABLE.key?(nm1)
-        raise NameError, "collision crc-module name: #{nm} (#{crc::GENERATOR} and #{MODULE_TABLE[nm1]::GENERATOR})"
+        raise NameError, "collision crc-module name: #{nm} ({#{crc.to_str}} and {#{MODULE_TABLE[nm1].to_str}})"
       end
       MODULE_TABLE[nm1] = crc
 
