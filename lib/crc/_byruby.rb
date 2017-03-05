@@ -57,10 +57,6 @@ class CRC
         # CRC クラスを普通に派生させた場合でも、CRC.new の基底メソッドが呼ばれるための細工
         define_singleton_method(:new, &Class.instance_method(:new).bind(self))
 
-        singleton_class.class_eval do
-          alias_method :[], :new
-        end
-
         extend CRC::Calcurator
       end
     end
