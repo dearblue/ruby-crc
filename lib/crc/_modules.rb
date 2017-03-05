@@ -1,7 +1,7 @@
 #!ruby
 
 #--
-# Author:: dearblue <dearblue@users.osdn.me>
+# Author:: dearblue <dearblue@users.noreply.github.com>
 # License:: Creative Commons License Zero (CC0 / Public Domain)
 #
 # references from:

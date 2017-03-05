@@ -29,7 +29,7 @@
 # >   madler@alumni.caltech.edu
 # >  */
 #
-# Ported by:: dearblue <dearblue@users.osdn.me>
+# Ported by:: dearblue <dearblue@users.noreply.github.com>
 # License:: zlib-style
 #--
 
