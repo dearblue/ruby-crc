@@ -15,7 +15,7 @@ Pure ruby implemented general CRC (Cyclic Redundancy Check) calcurator.
 Customization is posible for 1 to 64 bit width, any polynomials, and with/without bit reflection input/output.
 If you need more speed, please use crc-turbo.
 EOS
-  s.homepage = "https://github.com/dearblue/ruby-crc-turbo"
+  s.homepage = "https://github.com/dearblue/ruby-crc"
   s.licenses = ["BSD-2-Clause", "Zlib", "CC0-1.0"]
   s.author = "dearblue"
   s.email = "dearblue@users.noreply.github.com"
