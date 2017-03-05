@@ -20,8 +20,8 @@ EOS
   s.author = "dearblue"
   s.email = "dearblue@users.osdn.me"
 
-  s.required_ruby_version = ">= 2.0"
-  s.add_development_dependency "rake", "~> 11"
+  s.required_ruby_version = ">= 2.2"
+  s.add_development_dependency "rake"
 end
 
 verfile = "lib/crc/version.rb"
