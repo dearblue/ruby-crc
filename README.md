@@ -111,7 +111,7 @@ b = CRC.crc32.acrc(a, c, wantcrc)   # => "3456"
 CRC.crc32[a + b + c]                # => #<CRC::CRC32:CBF43926>
 ```
 
-See CRC::ModuleClass.acrc or below for more detail.
+See CRC::Calcurate.acrc or below for more detail.
 
 
 ## Built-in CRC modules
