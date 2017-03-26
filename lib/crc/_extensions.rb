@@ -37,6 +37,16 @@ class CRC
       end
     end
 
+    refine NilClass do
+      def each_byte
+        self
+      end
+
+      def reverse_each_byte
+        nil
+      end
+    end
+
     # refinements:
     # * convert_internal_state_for
     # * convert_target_state_for

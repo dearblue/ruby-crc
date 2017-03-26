@@ -1,4 +1,8 @@
+require_relative "_extensions"
+
 class CRC
+  using Extensions
+
   module Calcurator
     #
     # call-seq:
