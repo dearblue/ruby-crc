@@ -20,7 +20,7 @@ If you need more speed, please use with [crc-turbo](https://rubygems/gems/crc-tu
   * author: dearblue (mailto:dearblue@users.noreply.github.com)
   * report issue to: <https://github.com/dearblue/ruby-crc/issues>
   * how to install: ``gem install crc``
-  * version: 0.4
+  * version: 0.4.0.1
   * production quality: TECHNICAL PREVIEW
   * licensing:
       * ***BSD-2-Clause : MAIN LICENSE***

@@ -2,6 +2,11 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
+## crc-0.4.0.1 (平成29年3月28日 火曜日)
+
+  * acrc、shift 系メソッドのバグ修正
+
+
 ## crc-0.4 (平成29年3月5日 日曜日)
 
 ***互換性を損なう変更があります。***

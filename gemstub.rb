@@ -21,7 +21,7 @@ EOS
   s.email = "dearblue@users.noreply.github.com"
 
   s.required_ruby_version = ">= 2.2"
-  s.add_development_dependency "rake"
+  s.add_development_dependency "rake", ">= 12"
 end
 
 verfile = "lib/crc/version.rb"
