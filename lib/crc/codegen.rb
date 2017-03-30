@@ -318,14 +318,14 @@ extern "C"
 #
 
 # for ruby-1.8
-unless "".respond_to?(:getbyte)
+unless String.method_defined?(:getbyte)
   class String
     alias getbyte []
   end
 end
 
 # for mruby
-unless [].respond_to?(:freeze)
+unless Array.method_defined?(:freeze)
   class Array
     def freeze
       self
