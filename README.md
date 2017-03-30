@@ -207,13 +207,14 @@ And, this command has feature too that is print for each CRC specifications as Y
 $ rbcrc -lvv
 ...snip...
 "CRC-32":
-  bitsize:        32
-  polynomial:     0x04C11DB7
-  reflect input:  true
-  reflect output: true
-  initial crc:    0x00000000
-  xor output:     0xFFFFFFFF
-  magic number:   0x2144DF1C
+  bitsize:              32
+  polynomial:           0x04C11DB7  # 0xEDB88320 (bit reflected)
+  reversed reciprocal:  0x82608EDB  # 0xDB710641 (bit reflected)
+  reflect input:        true
+  reflect output:       true
+  initial crc:          0x00000000  # 0xFFFFFFFF (initial state)
+  xor output:           0xFFFFFFFF
+  magic number:         0x2144DF1C  # 0xDEBB20E3 (internal state)
   another names:
   - "CRC-32-ADCCP"
   - "CRC-32-PKZIP"
