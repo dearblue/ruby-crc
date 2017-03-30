@@ -252,8 +252,9 @@ begin
                            normalin.nil? ? wcrc.reflect_input? : !normalin,
                            normalout.nil? ? wcrc.reflect_output? : !normalout,
                            wxor)
-            wcrcname = crcname || basename
           end
+
+          wcrcname = crcname || basename
         end
 
         case type
