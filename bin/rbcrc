@@ -195,26 +195,35 @@ begin
         bytesize = (e[0] + 7) / 8
         bitmask = ~(~0 << e[0])
         hex = ->(n) { "0x%0*X" % [bytesize * 2, bitmask & n] }
-        names = e[8 .. -1]
-        if names.empty?
-          names = nil
-        else
-          names = <<-YAML_FORMAT.chomp!
+        revrec = (e[1] >> 1) | (1 << (e[0] - 1)) # reversed reciprocal
+        if e[2]
+          refpoly = "  \# #{hex[CRC.bitreflect(e[1], e[0])]} (bit reflected)"
+          recpoly = "  \# #{hex[CRC.bitreflect(revrec, e[0])]} (bit reflected)"
+        end
+        unless e[5] == 0
+          internalstate = "  \# #{hex[e[4] ^ e[5]]} (initial state)"
+          internalmagic = "  \# #{hex[CRC[e[7]].magicnumber ^ e[5]]} (internal state)"
+        end
+        spec = <<-YAML
+"#{e[7]}":
+  bitsize:              #{e[0]}
+  polynomial:           #{hex[e[1]]}#{refpoly}
+  reversed reciprocal:  #{hex[revrec]}#{recpoly}
+  reflect input:        #{e[2].inspect}
+  reflect output:       #{e[3].inspect}
+  initial crc:          #{hex[e[4]]}#{internalstate}
+  xor output:           #{hex[e[5]]}
+  magic number:         #{hex[CRC[e[7]].magicnumber]}#{internalmagic}
+        YAML
 
+        unless (names = e[8 .. -1]).empty?
+          spec << <<-YAML
   another names:
   - "#{names.join(%("\n  - "))}"
-          YAML_FORMAT
+          YAML
         end
-        puts <<-YAML_FORMAT
-"#{e[7]}":
-  bitsize:        #{e[0]}
-  polynomial:     #{hex[e[1]]}
-  reflect input:  #{e[2].inspect}
-  reflect output: #{e[3].inspect}
-  initial crc:    #{hex[e[4]]}
-  xor output:     #{hex[e[5]]}
-  magic number:   #{hex[CRC[e[7]].magicnumber]}#{names}
-        YAML_FORMAT
+
+        puts spec
       end
     end
   else
