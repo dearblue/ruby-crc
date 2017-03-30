@@ -162,8 +162,8 @@ class CRC
       slicing = algorithm.times.map { |off|
         ioff = (algorithm - 1) - off
         "table[%2d][p[%2d] %20s]" % [
-          off, ioff,
-          ioff >= alignedbytes ? nil : "^ #{getleadbyte["s", ioff]}"]
+          ioff, off,
+          off >= alignedbytes ? nil : "^ #{getleadbyte["s", off]}"]
       }
       if algorithm < alignedbytes
         slicing.insert 0, slideslicing["s"]
