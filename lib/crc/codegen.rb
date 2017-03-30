@@ -347,27 +347,9 @@ class #{name.join("::")}
   #
   # call-seq:
   #   initialize(prevcrc = nil)
-  #   initialize(seq, prevcrc = nil)
   #
-  def initialize(*args)
-    case args.size
-    when 0
-      seq = nil
-      prevcrc = nil
-    when 1
-      if args[0].kind_of?(String)
-        seq = args[0]
-      else
-        prevcrc = args[0]
-      end
-    when 2
-      (seq, prevcrc) = args
-    else
-      raise ArgumentError, "wrong number of argument (given \#{args.size}, expect 0..2)"
-    end
-
+  def initialize(prevcrc = nil)
     reset(prevcrc)
-    update(seq) if seq
   end
 
   def reset(prevcrc = nil)
@@ -406,7 +388,9 @@ class #{name.join("::")}
 
   class << self
     def [](seq, prevcrc = nil)
-      new(seq, prevcrc)
+      crc = new(prevcrc)
+      crc << seq
+      crc
     end
 
     def setup(crc = INITIAL_CRC)
