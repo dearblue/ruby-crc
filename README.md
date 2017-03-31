@@ -170,7 +170,7 @@ About LICENSE for generated source code:
 
 Algorithms (C file type only):
   bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table,
-  slicing-by-4, slicing-by-8, slicing-by-16
+  slicing-by-4, slicing-by-8, slicing-by-16, slicing-by-{2..999}
 
 Support export file types:
   * .c for C (support C89, but required ``stdint.h'')
