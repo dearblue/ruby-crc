@@ -68,16 +68,18 @@ OptionParser.new("usage: #{File.basename $0} [options] output-filename...", 12, 
       "bitbybitfast" => CRC::ALGORITHM_BITBYBIT_FAST,
       "halfbytetable" => CRC::ALGORITHM_HALFBYTE_TABLE,
       "standardtable" => CRC::ALGORITHM_STANDARD_TABLE,
-      "sliceby4" => CRC::ALGORITHM_SLICING_BY_4,
-      "slicingby4" => CRC::ALGORITHM_SLICING_BY_4,
-      "sliceby8" => CRC::ALGORITHM_SLICING_BY_8,
-      "slicingby8" => CRC::ALGORITHM_SLICING_BY_8,
-      "sliceby16" => CRC::ALGORITHM_SLICING_BY_16,
-      "slicingby16" => CRC::ALGORITHM_SLICING_BY_16,
     }[xx]
     unless algorithm
-      raise OptionParser::InvalidOption,
-            "wrong algorithm name - ``#{x}'' (except bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table, slicing-by-4, slicing-by-8, slicing-by-16)"
+      unless xx =~ /\A(?:slic(?:e|ing)by|sb)(\d+)\z/
+        raise OptionParser::InvalidOption,
+              "wrong algorithm name - ``#{x}'' (except bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table or slicing-by-{2..999})"
+      end
+
+      algorithm = $1.to_i
+      unless algorithm >= 2 && algorithm <= 999
+        raise OptionParser::InvalidOption,
+              "wrong number for slicing-by-N (given #$1, expect 2..999)"
+      end
     end
   }
 
@@ -96,7 +98,7 @@ About LICENSE for generated source code:
 
 Algorithms (C file type only):
   bit-by-bit, bit-by-bit-fast, halfbyte-table, standard-table,
-  slicing-by-4, slicing-by-8, slicing-by-16
+  slicing-by-4, slicing-by-8, slicing-by-16, slicing-by-{2..999}
 
 Support export file types:
   * .c for C (support C89, but required ``stdint.h'')

@@ -158,10 +158,16 @@ class CRC
       UPDATE_STANDARD_TABLE
     when ALGORITHM_SLICING_BY_4,
          ALGORITHM_SLICING_BY_8,
-         ALGORITHM_SLICING_BY_16
+         ALGORITHM_SLICING_BY_16,
+         2 .. 999
+      if algorithm > 100
+        slicing_format = "table[%3d][p[%3d] %20s]"
+      else
+        slicing_format = "table[%2d][p[%2d] %20s]"
+      end
       slicing = algorithm.times.map { |off|
         ioff = (algorithm - 1) - off
-        "table[%2d][p[%2d] %20s]" % [
+        slicing_format % [
           ioff, off,
           off >= alignedbytes ? nil : "^ #{getleadbyte["s", off]}"]
       }
@@ -832,7 +838,7 @@ end
         algorithm = "halfbyte-table"
       when ALGORITHM_STANDARD_TABLE
         algorithm = "standard-table"
-      when ALGORITHM_SLICING_BY_4, ALGORITHM_SLICING_BY_8, ALGORITHM_SLICING_BY_16
+      when ALGORITHM_SLICING_BY_4, ALGORITHM_SLICING_BY_8, ALGORITHM_SLICING_BY_16, 2..999
         algorithm = "slicing-by-#{algorithm} (with byte-order free), based Intel's slicing-by-8"
       else
         raise ArgumentError, "out of algorithm code (given #{algorithm})"
