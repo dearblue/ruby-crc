@@ -2,7 +2,7 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
-## crc-0.4.1 (TRYOUT)
+## crc-0.4.1 (平成29年4月1日 土曜日)
 
   * rbcrc -lvv の表示に、ビット反転多項式、相反多項式、初期内部状態、ビット反転魔法数を追加
   * ``dump_to_c`` に slicing-by-2 から slicing-by-999 までの出力機能を追加
