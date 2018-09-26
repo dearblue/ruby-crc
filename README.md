@@ -11,7 +11,7 @@ Customization is posible for 1 to 64 bit width, any polynomials, and with/withou
 
 This library is slower than ×85+ of zlib/crc32, and slower than ×120+ of extlzma/crc32 on FreeBSD 10.3R amd64.
 
-If you need more speed, please use with [crc-turbo](https://rubygems/gems/crc-turbo).
+If you need more speed, please use with [crc-turbo](https://rubygems.org/gems/crc-turbo).
 
 
 ## Summary
