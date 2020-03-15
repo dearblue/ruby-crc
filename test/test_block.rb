@@ -5,7 +5,7 @@ require "crc"
 require_relative "common"
 
 class TestCRC < Test::Unit::TestCase
-  $testmodules.each do |crc|
+  $testmodels.each do |crc|
     next unless crc.const_defined?(:CHECK) && crc::CHECK
     class_eval(<<-"EOS", __FILE__, __LINE__ + 1)
       def test_block_#{crc.to_s.slice(/\w+$/)}

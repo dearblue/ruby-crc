@@ -1,9 +1,9 @@
 require "crc"
 
-$stderr.puts "#{__FILE__}:#{__LINE__}: SELF CHECK for CRC modules (#{File.basename($".grep(/_(?:byruby|turbo)/)[0]||"")})\n"
+$stderr.puts "#{__FILE__}:#{__LINE__}: SELF CHECK for CRC models (#{File.basename($".grep(/_(?:byruby|turbo)/)[0]||"")})\n"
 
 class CRC
-  MODULE_TABLE.values.uniq.each do |crc|
+  MODEL_TABLE.values.uniq.each do |crc|
     check = crc::CHECK
     checked = crc.crc("123456789")
     case check

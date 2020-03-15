@@ -5,7 +5,7 @@ This is a general CRC (Cyclic Redundancy Check) calcurator for ruby.
 
 It is written by pure ruby with based on slice-by-eight algorithm (slice-by-16 algorithm with byte-order free).
 
-Included built-in CRC modules are CRC-32, CRC-32C, CRC-64-XZ, CRC-16, CRC-8-MAXIM, CRC-5-USB and many more.
+Included built-in CRC models are CRC-32, CRC-32C, CRC-64-XZ, CRC-16, CRC-8-MAXIM, CRC-5-USB and many more.
 
 Customization is posible for 1 to 64 bit width, any polynomials, and with/without bit reflection input/output.
 
@@ -25,7 +25,7 @@ If you need more speed, please use with [crc-turbo](https://rubygems.org/gems/cr
   * licensing:
       * ***BSD-2-Clause : MAIN LICENSE***
       * zlib-style License : ``lib/crc/_combine.rb``
-      * Creative Commons License Zero (CC0 / Public Domain) : ``lib/crc/_byruby.rb``, ``lib/crc/_modules.rb``
+      * Creative Commons License Zero (CC0 / Public Domain) : ``lib/crc/_byruby.rb``, ``lib/crc/_models.rb``
   * dependency gems: none
   * dependency external C libraries: none
   * bundled external C libraries: none
@@ -35,7 +35,7 @@ If you need more speed, please use with [crc-turbo](https://rubygems.org/gems/cr
 
 ## API Guide
 
-This examples are used CRC-32 module. Please see CRC for more details.
+This examples are used CRC-32 model. Please see CRC for more details.
 
 ### Calcurate by direct
 
@@ -82,9 +82,9 @@ Example-2 ::
 CRC.crc32["123"] + CRC.crc32["456"] + CRC.crc32["789"] # => #<CRC::CRC32:CBF43926>
 ```
 
-### Create customized crc module
+### Create customized crc model
 
-  * ``CRC.new(bitsize, poly, initial_crc = 0, refin = true, refout = true, xor_output = ~0) => new crc module class``
+  * ``CRC.new(bitsize, poly, initial_crc = 0, refin = true, refout = true, xor_output = ~0) => new crc model class``
 
 Example ::
 
@@ -112,7 +112,7 @@ CRC.crc32[a + b + c]                # => #<CRC::CRC32:CBF43926>
 See CRC::Calcurate.acrc or below for more detail.
 
 
-## Built-in CRC modules
+## Built-in CRC models
 
 ```
 $ rbcrc -lq

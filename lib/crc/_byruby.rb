@@ -27,7 +27,7 @@ class CRC
   class << self
     #
     # call-seq:
-    #   new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil) -> new crc module class (CRC based class)
+    #   new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil) -> new crc model class (CRC based class)
     #   new(initial_crc = nil, size = 0) -> new crc calcurator (CRC instance)
     #
     def new(bitsize, polynomial, initial_crc = 0, reflect_input = true, reflect_output = true, xor_output = ~0, name = nil)

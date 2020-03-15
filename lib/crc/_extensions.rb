@@ -91,7 +91,7 @@ class CRC
     refine CRC do
       def convert_internal_state_for(crc)
         unless crc.variant?(self)
-          raise "not variant crc module (expect #{crc.to_s}, but self is #{inspect})"
+          raise "not variant crc model (expect #{crc.to_s}, but self is #{inspect})"
         end
 
         state
@@ -99,7 +99,7 @@ class CRC
 
       def convert_target_state_for(crc)
         unless crc.variant?(self)
-          raise "not variant crc module (expect #{crc.to_s}, but self is #{inspect})"
+          raise "not variant crc model (expect #{crc.to_s}, but self is #{inspect})"
         end
 
         state
@@ -168,12 +168,12 @@ class CRC
     end
 
     # refinements:
-    # * get_crc_module
+    # * get_crc_model
     # * variant_for?
     ;
 
     refine BasicObject do
-      def get_crc_module
+      def get_crc_model
         nil
       end
 
@@ -183,18 +183,18 @@ class CRC
     end
 
     refine CRC do
-      alias get_crc_module class
+      alias get_crc_model class
 
       def variant_for?(m)
-        get_crc_module.variant_for?(m)
+        get_crc_model.variant_for?(m)
       end
     end
 
     refine CRC.singleton_class do
-      alias get_crc_module itself
+      alias get_crc_model itself
 
       def variant_for?(m)
-        return false unless m = m.get_crc_module
+        return false unless m = m.get_crc_model
 
         if bitsize == m.bitsize &&
            polynomial == m.polynomial &&

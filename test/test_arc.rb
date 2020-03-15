@@ -7,7 +7,7 @@ require "crc/acrc"
 require "securerandom"
 
 class TestArcCRC < Test::Unit::TestCase
-  $testmodules.each do |crc|
+  $testmodels.each do |crc|
     class_eval(<<-"EOS", __FILE__, __LINE__ + 1)
       def test_arc_#{crc.to_s.slice(/\w+$/)}
         crc = #{crc}

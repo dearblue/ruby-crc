@@ -5,7 +5,7 @@ require "crc"
 require_relative "common"
 
 class TestCRCMagic < Test::Unit::TestCase
-  $testmodules.each do |crc|
+  $testmodels.each do |crc|
     next unless crc.const_defined?(:CHECK) && crc::CHECK
     name = crc.to_s.slice(/\w+$/)
     class_eval(<<-"TESTCODE", __FILE__, __LINE__ + 1)

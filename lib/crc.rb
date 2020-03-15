@@ -19,7 +19,7 @@ require_relative "crc/version"
 #
 # This is a general CRC calcurator.
 #
-# When you want to use CRC-32 module, there are following ways:
+# When you want to use CRC-32 model, there are following ways:
 #
 # 1. Calcurate CRC-32'd value at direct:
 #
@@ -157,20 +157,20 @@ class CRC
   #   initialize(initial_crc = nil, size = 0)
   #
   def initialize(initial_crc = nil, size = 0)
-    m = get_crc_module
+    m = get_crc_model
     @state = m.setup((initial_crc || m.initial_crc).to_i)
     @size = size.to_i
   end
 
   def reset(initial_crc = nil, size = 0)
-    m = get_crc_module
+    m = get_crc_model
     @state = m.setup((initial_crc || m.initial_crc).to_i)
     @size = size.to_i
     self
   end
 
   def update(seq)
-    @state = get_crc_module.update(seq, state)
+    @state = get_crc_model.update(seq, state)
     @size += seq.bytesize
     self
   end
@@ -178,15 +178,15 @@ class CRC
   alias << update
 
   def crc
-    get_crc_module.finish(state)
+    get_crc_model.finish(state)
   end
 
   def +(crc2)
-    m1 = get_crc_module
-    m2 = crc2.get_crc_module
+    m1 = get_crc_model
+    m2 = crc2.get_crc_model
     raise ArgumentError, "not a CRC instance (#{crc2.inspect})" unless m2
     unless m2.variant_for?(m1)
-      raise ArgumentError, "different CRC module (#{m1.inspect} and #{m2.inspect})"
+      raise ArgumentError, "different CRC model (#{m1.inspect} and #{m2.inspect})"
     end
     m1.new(m1.combine(crc, crc2.crc, crc2.size), size + crc2.size)
   end
@@ -214,66 +214,66 @@ class CRC
   end
 
   def digest
-    Aux.digest(crc, get_crc_module.bitsize)
+    Aux.digest(crc, get_crc_model.bitsize)
   end
 
   # return digest as internal state
   def digest!
-    Aux.digest(state, get_crc_module.bitsize)
+    Aux.digest(state, get_crc_model.bitsize)
   end
 
   def hexdigest
-    Aux.hexdigest(crc, get_crc_module.bitsize)
+    Aux.hexdigest(crc, get_crc_model.bitsize)
   end
 
   # return hex-digest as internal state
   def hexdigest!
-    Aux.hexdigest(state, get_crc_module.bitsize)
+    Aux.hexdigest(state, get_crc_model.bitsize)
   end
 
   alias to_str hexdigest
   alias to_s hexdigest
 
   def inspect
-    "\#<#{get_crc_module}:#{hexdigest}>"
+    "\#<#{get_crc_model}:#{hexdigest}>"
   end
 
   def pretty_inspect(q)
     q.text inspect
   end
 
-  MODULE_TABLE = {}
+  MODEL_TABLE = {}
 
   class << self
-    def lookup(modulename)
-      modulename1 = modulename.to_s.gsub(/[\W_]+/, "")
-      modulename1.downcase!
-      MODULE_TABLE[modulename1] or raise NameError, "modulename is not matched (for #{modulename})"
+    def lookup(modelname)
+      modelname1 = modelname.to_s.gsub(/[\W_]+/, "")
+      modelname1.downcase!
+      MODEL_TABLE[modelname1] or raise NameError, "modelname is not matched (for #{modelname})"
     end
 
     alias [] lookup
 
-    def crc(modulename, seq, crc = nil)
-      lookup(modulename).crc(seq, crc)
+    def crc(modelname, seq, crc = nil)
+      lookup(modelname).crc(seq, crc)
     end
 
-    def digest(modulename, seq, crc = nil)
-      lookup(modulename).digest(seq, crc)
+    def digest(modelname, seq, crc = nil)
+      lookup(modelname).digest(seq, crc)
     end
 
-    def hexdigest(modulename, seq, crc = nil)
-      lookup(modulename).hexdigest(seq, crc)
+    def hexdigest(modelname, seq, crc = nil)
+      lookup(modelname).hexdigest(seq, crc)
     end
   end
 
-  require_relative "crc/_modules"
+  require_relative "crc/_models"
   require_relative "crc/_combine"
   require_relative "crc/_shift"
   require_relative "crc/_magic"
   require_relative "crc/_file"
 
   #
-  # Create CRC module classes.
+  # Create CRC model classes.
   #
   LIST.each do |bitsize, polynomial, refin, refout, initial_crc, xor, check, *names|
     names.flatten!
@@ -284,10 +284,10 @@ class CRC
 
     names.each do |nm|
       nm1 = nm.downcase.gsub(/[\W_]+/, "")
-      if MODULE_TABLE.key?(nm1)
-        raise NameError, "collision crc-module name: #{nm} ({#{crc.to_str}} and {#{MODULE_TABLE[nm1].to_str}})"
+      if MODEL_TABLE.key?(nm1)
+        raise NameError, "collision crc-model name: #{nm} ({#{crc.to_str}} and {#{MODEL_TABLE[nm1].to_str}})"
       end
-      MODULE_TABLE[nm1] = crc
+      MODEL_TABLE[nm1] = crc
 
       name = nm.sub(/(?<=\bCRC)-(?=\d+)/, "").gsub(/[\W]+/, "_")
       const_set(name, crc)
