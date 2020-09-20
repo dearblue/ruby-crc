@@ -2,6 +2,14 @@ This document is written in Japanese.
 
 # crc for ruby の更新履歴
 
+## crc-0.4.2 (令和2年9月20日 日曜日)
+
+  * "CRC Module" は "CRC Model" とするべきなので修正
+  * 初期値の間違っていた CRC モデルがあったため修正
+  * "calcurator" は "calculator" の誤植なので修正 (thanks @stbnrivas [#2](https://github.com/dearblue/ruby-crc/pull/2))
+  * 間違ったリンクの修正 (thanks @simi [#1](https://github.com/dearblue/ruby-crc/pull/1))
+
+
 ## crc-0.4.1 (平成29年4月1日 土曜日)
 
   * rbcrc -lvv の表示に、ビット反転多項式、相反多項式、初期内部状態、ビット反転魔法数を追加
