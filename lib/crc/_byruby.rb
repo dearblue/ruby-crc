@@ -9,7 +9,7 @@
 #
 # \* \* \* \* \* \* \* \*
 #
-# Pure ruby implemented general CRC calculator.
+# Pure ruby implemented generic CRC calculator.
 # It's used slice-by-16 algorithm with byte-order free.
 # This is based on the Intel's slice-by-eight algorithm.
 #

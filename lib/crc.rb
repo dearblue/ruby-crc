@@ -17,7 +17,7 @@ end
 require_relative "crc/version"
 
 #
-# This is a general CRC calculator.
+# This is a generic CRC calculator.
 #
 # When you want to use CRC-32 model, there are following ways:
 #

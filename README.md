@@ -1,7 +1,7 @@
 
 # crc - CRC calculator for ruby
 
-This is a general CRC (Cyclic Redundancy Check) calculator for ruby.
+This is a generic CRC (Cyclic Redundancy Check) calculator for ruby.
 
 It is written by pure ruby with based on slice-by-eight algorithm (slice-by-16 algorithm with byte-order free).
 
