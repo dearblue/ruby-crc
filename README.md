@@ -1,5 +1,5 @@
 
-# crc - CRC calcurator for ruby
+# crc - CRC calculator for ruby
 
 This is a general CRC (Cyclic Redundancy Check) calculator for ruby.
 
@@ -30,24 +30,24 @@ If you need more speed, please use with [crc-turbo](https://rubygems.org/gems/cr
   * dependency external C libraries: none
   * bundled external C libraries: none
   * installed executable file:
-      * rbcrc: CRC calcuration source code generator for c, ruby and javascript
+      * rbcrc: CRC calculation source code generator for c, ruby and javascript
 
 
 ## API Guide
 
 This examples are used CRC-32 model. Please see CRC for more details.
 
-### Calcurate by direct
+### Calculate by direct
 
   * ``CRC.crc32(seq, init = CRC::CRC32.initial_crc) => crc-32 integer`` (likely as ``Zlib.crc32``)
   * ``CRC.crc32.crc(seq, init = CRC::CRC32.initial_crc) => crc-32 integer`` (likely as ``Zlib.crc32``)
   * ``CRC.crc32.digest(seq, init = CRC::CRC32.initial_crc) => crc-32 digest`` (likely as ``Digest::XXXX.digest``)
   * ``CRC.crc32.hexdigest(seq, init = CRC::CRC32.initial_crc) -> crc-32 hex-digest`` (likely as ``Digest::XXXX.hexdigest``)
-  * ``CRC.crc32[seq, init = CRC::CRC32.initial_crc, current_length = 0] -> crc-32 calcurator``
+  * ``CRC.crc32[seq, init = CRC::CRC32.initial_crc, current_length = 0] -> crc-32 calculator``
 
-### Calcurate by streaming
+### Calculate by streaming
 
-  * ``CRC.crc32.new(init = 0, current_length = 0) => crc-32 calcurator``
+  * ``CRC.crc32.new(init = 0, current_length = 0) => crc-32 calculator``
   * ``CRC::CRC32#update(seq) => self`` (likely as ``Digest::XXXX.update``)
   * ``CRC::CRC32#finish => crc-32 integer`` (likely as ``Digest::XXXX.finish``)
   * ``CRC::CRC32#crc => crc-32 integer`` (same as ``CRC::CRC32#finish``)
@@ -68,7 +68,7 @@ x.hexdigest           # => "CBF43926"
 ### Combine
 
   * ``CRC.combine(crc1, crc2, len2) => combined crc integer`` (likely as ``Zlib.crc32_comibne``)
-  * ``CRC#+(right_crc) => combined crc calcurator``
+  * ``CRC#+(right_crc) => combined crc calculator``
 
 Example-1 ::
 
@@ -95,7 +95,7 @@ MyCRC32.hexdigest("123456789")    # => "CBF43926"
 MyCRC32["123456789"]              # => #<MyCRC32:CBF43926>
 ```
 
-### Calcurate arc-crc
+### Calculate arc-crc
 
   * ``CRC::XXX.acrc(pre, post = nil, want_crc = 0) => arc-crc byte string``
 
@@ -109,7 +109,7 @@ b = CRC.crc32.acrc(a, c, wantcrc)   # => "3456"
 CRC.crc32[a + b + c]                # => #<CRC::CRC32:CBF43926>
 ```
 
-See CRC::Calcurate.acrc or below for more detail.
+See CRC::Calculate.acrc or below for more detail.
 
 
 ## Built-in CRC models
@@ -134,9 +134,9 @@ CRC-1, CRC-3-ROHC, CRC-4-INTERLAKEN, CRC-4-ITU, CRC-5-EPC, CRC-5-ITU, CRC-5-USB,
 CRC.combine is ported from Mark Adler's crccomb.c in <https://stackoverflow.com/questions/29915764/generic-crc-8-16-32-64-combine-implementation#29928573>.
 
 
-## Source code generator for the specific CRC calcurator (from crc-0.3.1)
+## Source code generator for the specific CRC calculator (from crc-0.3.1)
 
-Add source code generator for the specific CRC calcurator to c, ruby, and javascript.
+Add source code generator for the specific CRC calculator to c, ruby, and javascript.
 
 Algorithm is slicing-by-16 only for ruby and javascript.
 
@@ -180,22 +180,22 @@ Support export file types:
                  (executable for mruby and limitation bitsize by fixnum)
 
 examples:
-  * create crc-32 calcurator to c source (and header file)
+  * create crc-32 calculator to c source (and header file)
     $ rbcrc crc32.c
 
-  * create crc-32c calcurator to ruby source
+  * create crc-32c calculator to ruby source
     $ rbcrc crc32c.rb
 
-  * create crc-30-cdma calcurator to javascript source
+  * create crc-30-cdma calculator to javascript source
     $ rbcrc crc30cdma.js
 
-  * create crc-32 calcurator to ``crc.c'', ``crc.rb'' and ``crc.js''
+  * create crc-32 calculator to ``crc.c'', ``crc.rb'' and ``crc.js''
     $ rbcrc -mcrc32 crc.c crc.rb crc.js
 
-  * create customized crc calcurator (as mycrc function) to ``mycrc.c''
+  * create customized crc calculator (as mycrc function) to ``mycrc.c''
     $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
-  * create customized crc calcurator (as MyCRC class) to ``mycrc_1.rb''
+  * create customized crc calculator (as MyCRC class) to ``mycrc_1.rb''
     $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
 ```
 

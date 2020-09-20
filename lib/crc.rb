@@ -17,15 +17,15 @@ end
 require_relative "crc/version"
 
 #
-# This is a general CRC calcurator.
+# This is a general CRC calculator.
 #
 # When you want to use CRC-32 model, there are following ways:
 #
-# 1. Calcurate CRC-32'd value at direct:
+# 1. Calculate CRC-32'd value at direct:
 #
 #     CRC.crc32("123456789") # => 3421780262
 #
-# 2. Calcurate CRC-32'd hex-digest at direct:
+# 2. Calculate CRC-32'd hex-digest at direct:
 #
 #     CRC::CRC32.hexdigest("123456789") # => "CBF43926"
 #
@@ -51,7 +51,7 @@ class CRC
 
   using Extensions
 
-  module Calcurator
+  module Calculator
     def [](seq, *args)
       c = new(*args)
       c.update(seq) if seq
@@ -265,6 +265,10 @@ class CRC
       lookup(modelname).hexdigest(seq, crc)
     end
   end
+
+  # NOTE: "Calcurator" は typo ですが、後方互換のため一時的に残します。
+  # TODO: CRC::Calcurator はいずれ削除されます。
+  CRC::Calcurator = CRC::Calculator
 
   require_relative "crc/_models"
   require_relative "crc/_combine"

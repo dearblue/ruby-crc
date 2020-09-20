@@ -108,22 +108,22 @@ Support export file types:
                  (executable for mruby and limitation bitsize by fixnum)
 
 examples:
-  * create crc-32 calcurator to c source (and header file)
+  * create crc-32 calculator to c source (and header file)
     $ rbcrc crc32.c
 
-  * create crc-32c calcurator to ruby source
+  * create crc-32c calculator to ruby source
     $ rbcrc crc32c.rb
 
-  * create crc-30-cdma calcurator to javascript source
+  * create crc-30-cdma calculator to javascript source
     $ rbcrc crc30cdma.js
 
-  * create crc-32 calcurator to ``crc.c'', ``crc.rb'' and ``crc.js''
+  * create crc-32 calculator to ``crc.c'', ``crc.rb'' and ``crc.js''
     $ rbcrc -mcrc32 crc.c crc.rb crc.js
 
-  * create customized crc calcurator (as mycrc function) to ``mycrc.c''
+  * create customized crc calculator (as mycrc function) to ``mycrc.c''
     $ rbcrc -s15 -p0x6789 -io -x~0 mycrc.c
 
-  * create customized crc calcurator (as MyCRC class) to ``mycrc_1.rb''
+  * create customized crc calculator (as MyCRC class) to ``mycrc_1.rb''
     $ rbcrc -s39 -p0x987654321 -IO -x1 -nMyCRC mycrc_1.rb
   EOS
 

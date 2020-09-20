@@ -7,7 +7,7 @@ class CRC
     self
   end
 
-  module Calcurator
+  module Calculator
     def file(path, *args)
       new(*args).file(path)
     end

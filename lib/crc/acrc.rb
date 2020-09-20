@@ -5,7 +5,7 @@ require_relative "../crc"
 class CRC
   using CRC::Extensions
 
-  module Calcurator
+  module Calculator
     #
     # call-seq:
     #   acrc(pre, post = nil, targetcrc = 0) -> byte string as arc-code

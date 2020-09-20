@@ -3,7 +3,7 @@ require_relative "_extensions"
 class CRC
   using Extensions
 
-  module Calcurator
+  module Calculator
     #
     # call-seq:
     #   shiftbits_by_bitbybit(bitset, state) -> state
