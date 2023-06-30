@@ -286,7 +286,7 @@ class CRC
     crc = CRC.new(bitsize, polynomial, initial_crc, refin, refout, xor, names[0])
     crc.const_set :NAME, names
 
-    names.each do |nm|
+    class_eval names.each_with_object("") { |nm, a|
       nm1 = nm.downcase.gsub(/[\W_]+/, "")
       if MODEL_TABLE.key?(nm1)
         raise NameError, "collision crc-model name: #{nm} ({#{crc.to_str}} and {#{MODEL_TABLE[nm1].to_str}})"
@@ -296,15 +296,22 @@ class CRC
       name = nm.sub(/(?<=\bCRC)-(?=\d+)/, "").gsub(/[\W]+/, "_")
       const_set(name, crc)
 
-      define_singleton_method(name.upcase, ->(*args) { crc.new(*args) })
-      define_singleton_method(name.downcase, ->(*args) {
-        if args.size == 0
-          crc
-        else
-          crc.crc(*args)
+      a << <<-DEF
+        class << CRC
+          def #{name.upcase}(*args)
+            CRC::#{name}.new(*args)
+          end
+
+          def #{name.downcase}(*args)
+            if args.size == 0
+              CRC::#{name}
+            else
+              CRC::#{name}.crc(*args)
+            end
+          end
         end
-      })
-    end
+      DEF
+    }
 
     check = Integer(check.to_i) if check
     crc.const_set :CHECK, check

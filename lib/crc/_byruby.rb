@@ -54,7 +54,7 @@ class CRC
         @name = name
 
         # CRC クラスを普通に派生させた場合でも、CRC.new の基底メソッドが呼ばれるための細工
-        define_singleton_method(:new, &Class.instance_method(:new).bind(self))
+        define_singleton_method(:new, ::Class.instance_method(:new).bind(self))
 
         extend CRC::Calculator
       end
